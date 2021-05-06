@@ -1,0 +1,8 @@
+[DEFAULT]
+bantime = -1
+findtime = 1d
+maxretry = 2
+banaction = firewallcmd-allports
+
+[sshd]
+enabled = true

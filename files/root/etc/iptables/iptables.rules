@@ -1,0 +1,11 @@
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp --dport 42514 -s 10.0.1.10 -j ACCEPT
+# rclone dlna
+-A INPUT -p tcp --dport 7879 -j ACCEPT
+-A INPUT -p udp --dport 7879 -j ACCEPT
+COMMIT

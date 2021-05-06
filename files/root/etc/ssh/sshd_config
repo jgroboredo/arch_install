@@ -1,0 +1,6 @@
+Port 42514
+PermitRootLogin no
+X11Forwarding yes
+PasswordAuthentication no
+Subsystem sftp /usr/lib/ssh/sftp-server
+LogLevel VERBOSE

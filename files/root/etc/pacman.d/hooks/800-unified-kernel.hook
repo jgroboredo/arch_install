@@ -1,0 +1,21 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = systemd
+Target = linux
+Target = mkinitcpio
+Target = *-ucode
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/initcpio/*
+
+[Action]
+Description = Updating Unified Kernel Images
+When = PostTransaction
+Exec = /bin/bash -c "[ -d '/sys/firmware/efi' ] && /usr/bin/unified-kernel-image || echo Skipping Unified Kernel Image on BIOS"
