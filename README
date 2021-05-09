@@ -15,7 +15,7 @@ Some notes:
 			- git push -u origin main
 		We now have a new branch on the remote named "main".
 	- When you clone a repository with git clone , it automatically creates a remote connection called origin pointing back to the cloned repository. 
-	- when you do a git push origin master, you are saying to git: "Look git, I want to push the current branch I am on to the remote repository named origin, and I want to push to the master branch in that remote."
+	- when you do a git push origin master, you are saying to git: "Look git, I want to push the current branch I am on to the remote repository named origin, and I want to push to the master branch in that remote.". By default, the remote repository is named origin. I only need to specify where I want to push if there are more than 1 repositories.
 	- When you execute the command: git remote add origin "github repo link"
 		you are saying that for the current project, there is a remote repository with the name origin, with the address of "github repo link"
 
