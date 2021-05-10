@@ -202,9 +202,9 @@ partition_drive() {
 
     parted -s "$dev" \
         mklabel gpt \
-        mkpart "EFI system partition" fat32 1MiB 550MiB \
-        mkpart "swap partition" linux-swap 550MiB 2550MiB \
-        mkpart primary ext4 2550MiB 100% \
+        mkpart P1 'fat32' '1MiB' '550MiB' \
+        mkpart P2 'linux-swap' '550MiB' '2550MiB' \
+        mkpart P3 'ext4' '2550MiB' '100%' \
         set 1 esp on 
 }
 
@@ -240,7 +240,7 @@ install_packages() {
     packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools base-devel linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake wpa_actiond'
 
     # Libreoffice
-    packages+=' libreoffice-calc libreoffice-en-US libreoffice-gnome libreoffice-impress libreoffice-writer hunspell-en hyphen-en mythes-en'
+    packages+=' libreoffice-fresh hyphen-en mythes-en'
 
     # Misc programs
     packages+=' mpv xorg i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings firefox nitrogen picom lxappearance pcmanfm materia-gtk-theme papirus-icon-theme xfce4-terminal archlinux-wallpaper mlocate'
