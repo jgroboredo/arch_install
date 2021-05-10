@@ -237,7 +237,7 @@ unmount_filesystems() {
 install_packages() {
     local packages=''
 
-    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools base-devel linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake wpa_actiond'
+    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools base-devel linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake'
 
     # Libreoffice
     packages+=' libreoffice-fresh hyphen-en mythes-en'
