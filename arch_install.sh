@@ -282,7 +282,7 @@ install_yay() {
     cd /foo
     git clone https://aur.archlinux.org/yay.git
     cd yay
-    makepkg -si --noconfirm --asroot
+    makepkg -si --noconfirm 
 
     cd /
     rm -rf /foo
