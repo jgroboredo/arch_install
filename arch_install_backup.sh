@@ -42,19 +42,25 @@
 DRIVE='/dev/sda'
 
 # Hostname of the installed machine.
-HOSTNAME='goncalo'
+HOSTNAME='host100'
+
+# Encrypt everything (except /boot).  Leave blank to disable.
+ENCRYPT_DRIVE='TRUE'
+
+# Passphrase used to encrypt the drive (leave blank to be prompted).
+DRIVE_PASSPHRASE='a'
 
 # Root password (leave blank to be prompted).
-ROOT_PASSWORD=''
+ROOT_PASSWORD='a'
 
 # Main user to create (by default, added to wheel group, and others).
-USER_NAME='goncalo'
+USER_NAME='user'
 
 # The main user's password (leave blank to be prompted).
-USER_PASSWORD=''
+USER_PASSWORD='a'
 
 # System timezone.
-TIMEZONE='Europe/Lisbon'
+TIMEZONE='America/New_York'
 
 # Have /tmp on a tmpfs or not.  Leave blank to disable.
 # Only leave this blank on systems with very little RAM.
@@ -74,32 +80,47 @@ VIDEO_DRIVER="i915"
 #VIDEO_DRIVER="vesa"
 
 # Wireless device, leave blank to not use wireless and use DHCP instead.
-WIRELESS_DEVICE=""
+WIRELESS_DEVICE="wlan0"
 # For tc4200's
 #WIRELESS_DEVICE="eth1"
 
 setup() {
     local boot_dev="$DRIVE"1
-    local swap_dev="$DRIVE"2
-    local root_dev="$DRIVE"3 
-
-    echo 'Updating system clock'
-    timedatectl set-ntp true
+    local lvm_dev="$DRIVE"2
 
     echo 'Creating partitions'
     partition_drive "$DRIVE"
-    sleep 3
+
+    if [ -n "$ENCRYPT_DRIVE" ]
+    then
+        local lvm_part="/dev/mapper/lvm"
+
+        if [ -z "$DRIVE_PASSPHRASE" ]
+        then
+            echo 'Enter a passphrase to encrypt the disk:'
+            stty -echo
+            read DRIVE_PASSPHRASE
+            stty echo
+        fi
+
+        echo 'Encrypting partition'
+        encrypt_drive "$lvm_dev" "$DRIVE_PASSPHRASE" lvm
+
+    else
+        local lvm_part="$lvm_dev"
+    fi
+
+    echo 'Setting up LVM'
+    setup_lvm "$lvm_part" vg00
 
     echo 'Formatting filesystems'
-    format_filesystems "$DRIVE"
+    format_filesystems "$boot_dev"
 
     echo 'Mounting filesystems'
-    mount_filesystems "$DRIVE"
-    sleep 3
+    mount_filesystems "$boot_dev"
 
     echo 'Installing base system'
     install_base
-    sleep 3
 
     echo 'Chrooting into installed system to continue setup...'
     cp $0 /mnt/setup.sh
@@ -118,13 +139,13 @@ setup() {
 
 configure() {
     local boot_dev="$DRIVE"1
-    local root_dev="$DRIVE"3
+    local lvm_dev="$DRIVE"2
 
     echo 'Installing additional packages'
     install_packages
 
     echo 'Installing packer'
-    install_yay
+    install_packer
 
     echo 'Installing AUR packages'
     install_aur_packages
@@ -151,7 +172,7 @@ configure() {
     set_hosts "$HOSTNAME"
 
     echo 'Setting fstab'
-    set_fstab 
+    set_fstab "$TMP_ON_TMPFS" "$boot_dev"
 
     echo 'Setting initial modules to load'
     set_modules_load
@@ -163,13 +184,19 @@ configure() {
     set_daemons "$TMP_ON_TMPFS"
 
     echo 'Configuring bootloader'
-    set_grub
+    set_syslinux "$lvm_dev"
 
     echo 'Configuring sudo'
     set_sudoers
 
     echo 'Configuring slim'
-    #set_slim
+    set_slim
+
+    if [ -n "$WIRELESS_DEVICE" ]
+    then
+        echo 'Configuring netcfg'
+        set_netcfg
+    fi
 
     if [ -z "$ROOT_PASSWORD" ]
     then
@@ -200,65 +227,117 @@ configure() {
 partition_drive() {
     local dev="$1"; shift
 
+    # 100 MB /boot partition, everything else under LVM
     parted -s "$dev" \
-        mklabel gpt \
-        mkpart "EFI system partition" fat32 1MiB 550MiB \
-        mkpart "swap partition" linux-swap 550MiB 2550MiB \
-        mkpart primary ext4 2550MiB 100% \
-        set 1 esp on 
+        mklabel msdos \
+        mkpart primary ext2 1 100M \
+        mkpart primary ext2 100M 100% \
+        set 1 boot on \
+        set 2 LVM on
+}
+
+encrypt_drive() {
+    local dev="$1"; shift
+    local passphrase="$1"; shift
+    local name="$1"; shift
+
+    echo -en "$passphrase" | cryptsetup -c aes-xts-plain -y -s 512 luksFormat "$dev"
+    echo -en "$passphrase" | cryptsetup luksOpen "$dev" lvm
+}
+
+setup_lvm() {
+    local partition="$1"; shift
+    local volgroup="$1"; shift
+
+    pvcreate "$partition"
+    vgcreate "$volgroup" "$partition"
+
+    # Create a 1GB swap partition
+    lvcreate -C y -L1G "$volgroup" -n swap
+
+    # Use the rest of the space for root
+    lvcreate -l '+100%FREE' "$volgroup" -n root
+
+    # Enable the new volumes
+    vgchange -ay
 }
 
 format_filesystems() {
-    local drive="$1"; shift
+    local boot_dev="$1"; shift
 
-    mkfs.fat -F32 "$drive"1
-    mkfs.ext4 "$drive"3
-    mkswap "$drive"2; swapon "$drive"2
+    mkfs.ext2 -L boot "$boot_dev"
+    mkfs.ext4 -L root /dev/vg00/root
+    mkswap /dev/vg00/swap
 }
 
 mount_filesystems() {
-    local drive="$1"; shift
+    local boot_dev="$1"; shift
 
-    mount "$drive"3 /mnt
+    mount /dev/vg00/root /mnt
     mkdir /mnt/boot
-    mount "$drive"1 /mnt/boot
+    mount "$boot_dev" /mnt/boot
+    swapon /dev/vg00/swap
 }
 
 install_base() {
     echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
 
-    pacstrap /mnt base base-devel linux linux-firmware vim
+    pacstrap /mnt base base-devel
+    pacstrap /mnt syslinux
 }
 
 unmount_filesystems() {
-    umount -a
+    umount /mnt/boot
+    umount /mnt
+    swapoff /dev/vg00/swap
+    vgchange -an
+    if [ -n "$ENCRYPT_DRIVE" ]
+    then
+        cryptsetup luksClose lvm
+    fi
 }
 
 install_packages() {
     local packages=''
 
-    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools base-devel linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake wpa_actiond'
+    # General utilities/libraries
+    packages+=' alsa-utils aspell-en chromium cpupower gvim mlocate net-tools ntp openssh p7zip pkgfile powertop python python2 rfkill rsync sudo unrar unzip wget zip systemd-sysvcompat zsh grml-zsh-config'
+
+    # Development packages
+    packages+=' apache-ant cmake gdb git maven mercurial subversion tcpdump valgrind wireshark-gtk'
+
+    # Netcfg
+    if [ -n "$WIRELESS_DEVICE" ]
+    then
+        packages+=' netcfg ifplugd dialog wireless_tools wpa_actiond wpa_supplicant'
+    fi
+
+    # Java stuff
+    packages+=' icedtea-web-java7 jdk7-openjdk jre7-openjdk'
 
     # Libreoffice
     packages+=' libreoffice-calc libreoffice-en-US libreoffice-gnome libreoffice-impress libreoffice-writer hunspell-en hyphen-en mythes-en'
 
     # Misc programs
-    packages+=' mpv xorg i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings firefox nitrogen picom lxappearance pcmanfm materia-gtk-theme papirus-icon-theme xfce4-terminal archlinux-wallpaper mlocate'
+    packages+=' mplayer pidgin vlc xscreensaver gparted dosfstools ntfsprogs'
+
+    # Xserver
+    packages+=' xorg-apps xorg-server xorg-xinit xterm'
+
+    # Slim login manager
+    packages+=' slim archlinux-themes-slim'
 
     # Fonts
-    packages+=' ttf-dejavu ttf-liberation noto-fonts'
-
-    #Final packages1
-    packages+=' gvfs sshfs flameshot zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions xautolock'
-
-    #Final packages2
-    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome'
+    packages+=' ttf-dejavu ttf-liberation'
 
     # On Intel processors
     packages+=' intel-ucode'
 
     # For laptops
-    packages+=' xf86-input-libinput'
+    packages+=' xf86-input-synaptics'
+
+    # Extra packages for tc4200 tablet
+    #packages+=' ipw2200-fw xf86-input-wacom'
 
     if [ "$VIDEO_DRIVER" = "i915" ]
     then
@@ -277,11 +356,11 @@ install_packages() {
     pacman -Sy --noconfirm $packages
 }
 
-install_yay() {
+install_packer() {
     mkdir /foo
     cd /foo
-    git clone https://aur.archlinux.org/yay.git
-    cd yay
+    curl https://aur.archlinux.org/packages/pa/packer/packer.tar.gz | tar xzf -
+    cd packer
     makepkg -si --noconfirm --asroot
 
     cd /
@@ -291,14 +370,9 @@ install_yay() {
 install_aur_packages() {
     mkdir /foo
     export TMPDIR=/foo
-    yay -S --noconfirm acpi
-    yay -S --noconfirm pamac-aur
-    yay -S --noconfirm clipit
-    yay -S --noconfirm ttf-font-awesome
-    yay -S --noconfirm hamsket-bin
-    yay -S --noconfirm polkit-gnome
-    yay -S --noconfirm pa-applet-git
-    yay -S pavucontrol
+    packer -S --noconfirm android-udev
+    packer -S --noconfirm chromium-pepper-flash-stable
+    packer -S --noconfirm chromium-libpdf-stable
     unset TMPDIR
     rm -rf /foo
 }
@@ -321,14 +395,12 @@ set_timezone() {
     local timezone="$1"; shift
 
     ln -sT "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
-    hwclock --systohc
 }
 
 set_locale() {
     echo 'LANG="en_US.UTF-8"' >> /etc/locale.conf
     echo 'LC_COLLATE="C"' >> /etc/locale.conf
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-    echo "pt_PT.UTF-8 UTF-8" >> /etc/locale.gen
     locale-gen
 }
 
@@ -340,14 +412,28 @@ set_hosts() {
     local hostname="$1"; shift
 
     cat > /etc/hosts <<EOF
-127.0.0.1 localhost
-::1       localhost
-127.0.1.1 $hostname.localdomain $hostname
+127.0.0.1 localhost.localdomain localhost $hostname
+::1       localhost.localdomain localhost $hostname
 EOF
 }
 
 set_fstab() {
-    genfstab -U /mnt >> /mnt/etc/fstab
+    local tmp_on_tmpfs="$1"; shift
+    local boot_dev="$1"; shift
+
+    local boot_uuid=$(get_uuid "$boot_dev")
+
+    cat > /etc/fstab <<EOF
+#
+# /etc/fstab: static file system information
+#
+# <file system> <dir>    <type> <options>    <dump> <pass>
+
+/dev/vg00/swap none swap  sw                0 0
+/dev/vg00/root /    ext4  defaults,relatime 0 1
+
+UUID=$boot_uuid /boot ext2 defaults,relatime 0 2
+EOF
 }
 
 set_modules_load() {
@@ -367,6 +453,13 @@ set_initcpio() {
     then
         vid='radeon'
     fi
+
+    local encrypt=""
+    if [ -n "$ENCRYPT_DRIVE" ]
+    then
+        encrypt="encrypt"
+    fi
+
 
     # Set MODULES with your video driver
     cat > /etc/mkinitcpio.conf <<EOF
@@ -428,7 +521,7 @@ FILES=""
 #
 ##   NOTE: If you have /usr on a separate partition, you MUST include the
 #    usr, fsck and shutdown hooks.
-HOOKS="base udev autodetect modconf block keymap keyboard resume filesystems fsck"
+HOOKS="base udev autodetect modconf block keymap keyboard $encrypt lvm2 resume filesystems fsck"
 
 # COMPRESSION
 # Use this to compress the initramfs image. By default, gzip compression
@@ -450,11 +543,14 @@ EOF
 set_daemons() {
     local tmp_on_tmpfs="$1"; shift
 
-    systemctl enable cpupower.service ntpd.service
-    systemctl enable NetworkManager
-    systemctl enable bluetooth
-    systemctl enable fstrim.timer
-    systemctl enable tlp.service
+    systemctl enable cronie.service cpupower.service ntpd.service slim.service
+
+    if [ -n "$WIRELESS_DEVICE" ]
+    then
+        systemctl enable net-auto-wired.service net-auto-wireless.service
+    else
+        systemctl enable dhcpcd@eth0.service
+    fi
 
     if [ -z "$tmp_on_tmpfs" ]
     then
@@ -462,9 +558,96 @@ set_daemons() {
     fi
 }
 
-set_grub() {
-    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-    grub-mkconfig -o /boot/grub/grub.cfg
+set_syslinux() {
+    local lvm_dev="$1"; shift
+
+    local lvm_uuid=$(get_uuid "$lvm_dev")
+
+    local crypt=""
+    if [ -n "$ENCRYPT_DRIVE" ]
+    then
+        # Load in resources
+        crypt="cryptdevice=/dev/disk/by-uuid/$lvm_uuid:lvm"
+    fi
+
+    cat > /boot/syslinux/syslinux.cfg <<EOF
+# Config file for Syslinux -
+# /boot/syslinux/syslinux.cfg
+#
+# Comboot modules:
+#   * menu.c32 - provides a text menu
+#   * vesamenu.c32 - provides a graphical menu
+#   * chain.c32 - chainload MBRs, partition boot sectors, Windows bootloaders
+#   * hdt.c32 - hardware detection tool
+#   * reboot.c32 - reboots the system
+#   * poweroff.com - shutdown the system
+#
+# To Use: Copy the respective files from /usr/lib/syslinux to /boot/syslinux.
+# If /usr and /boot are on the same file system, symlink the files instead
+# of copying them.
+#
+# If you do not use a menu, a 'boot:' prompt will be shown and the system
+# will boot automatically after 5 seconds.
+#
+# Please review the wiki: https://wiki.archlinux.org/index.php/Syslinux
+# The wiki provides further configuration examples
+
+DEFAULT arch
+PROMPT 0        # Set to 1 if you always want to display the boot: prompt 
+TIMEOUT 50
+# You can create syslinux keymaps with the keytab-lilo tool
+#KBDMAP de.ktl
+
+# Menu Configuration
+# Either menu.c32 or vesamenu32.c32 must be copied to /boot/syslinux 
+UI menu.c32
+#UI vesamenu.c32
+
+# Refer to http://syslinux.zytor.com/wiki/index.php/Doc/menu
+MENU TITLE Arch Linux
+#MENU BACKGROUND splash.png
+MENU COLOR border       30;44   #40ffffff #a0000000 std
+MENU COLOR title        1;36;44 #9033ccff #a0000000 std
+MENU COLOR sel          7;37;40 #e0ffffff #20ffffff all
+MENU COLOR unsel        37;44   #50ffffff #a0000000 std
+MENU COLOR help         37;40   #c0ffffff #a0000000 std
+MENU COLOR timeout_msg  37;40   #80ffffff #00000000 std
+MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
+MENU COLOR msg07        37;40   #90ffffff #a0000000 std
+MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
+
+# boot sections follow
+#
+# TIP: If you want a 1024x768 framebuffer, add "vga=773" to your kernel line.
+#
+#-*
+
+LABEL arch
+	MENU LABEL Arch Linux
+	LINUX ../vmlinuz-linux
+	APPEND root=/dev/vg00/root ro $crypt resume=/dev/vg00/swap quiet
+	INITRD ../initramfs-linux.img
+
+LABEL archfallback
+	MENU LABEL Arch Linux Fallback
+	LINUX ../vmlinuz-linux
+	APPEND root=/dev/vg00/root ro $crypt resume=/dev/vg00/swap
+	INITRD ../initramfs-linux-fallback.img
+
+LABEL hdt
+        MENU LABEL HDT (Hardware Detection Tool)
+        COM32 hdt.c32
+
+LABEL reboot
+        MENU LABEL Reboot
+        COM32 reboot.c32
+
+LABEL off
+        MENU LABEL Power Off
+        COMBOOT poweroff.com
+EOF
+
+    syslinux-install_update -iam
 }
 
 set_sudoers() {
@@ -659,6 +842,36 @@ lockfile            /run/lock/slim.lock
 
 # Log file
 logfile             /var/log/slim.log
+EOF
+}
+
+set_netcfg() {
+    cat > /etc/network.d/wired <<EOF
+CONNECTION='ethernet'
+DESCRIPTION='Ethernet with DHCP'
+INTERFACE='eth0'
+IP='dhcp'
+EOF
+
+    chmod 600 /etc/network.d/wired
+
+    cat > /etc/conf.d/netcfg <<EOF
+# Enable these netcfg profiles at boot time.
+#   - prefix an entry with a '@' to background its startup
+#   - set to 'last' to restore the profiles running at the last shutdown
+#   - set to 'menu' to present a menu (requires the dialog package)
+# Network profiles are found in /etc/network.d
+NETWORKS=()
+
+# Specify the name of your wired interface for net-auto-wired
+WIRED_INTERFACE="eth0"
+
+# Specify the name of your wireless interface for net-auto-wireless
+WIRELESS_INTERFACE="$WIRELESS_DEVICE"
+
+# Array of profiles that may be started by net-auto-wireless.
+# When not specified, all wireless profiles are considered.
+#AUTO_PROFILES=("profile1" "profile2")
 EOF
 }
 

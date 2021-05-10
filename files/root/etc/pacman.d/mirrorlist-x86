@@ -1,4 +1,0 @@
-# mirrorlist for Portugal from arch-install
-
-Server = https://ftp.rnl.tecnico.ulisboa.pt/pub/archlinux/$repo/os/$arch
-Server = https://glua.ua.pt/pub/archlinux/$repo/os/$arch
