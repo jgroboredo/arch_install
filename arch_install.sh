@@ -126,9 +126,6 @@ configure() {
     echo 'Clearing package tarballs'
     clean_packages
 
-    echo 'Updating pkgfile database'
-    update_pkgfile
-
     echo 'Setting hostname'
     set_hostname "$HOSTNAME"
 
@@ -273,10 +270,6 @@ install_packages() {
 
 clean_packages() {
     yes | pacman -Scc
-}
-
-update_pkgfile() {
-    pkgfile -u
 }
 
 set_hostname() {
