@@ -101,6 +101,10 @@ setup() {
     install_base
     sleep 3
 
+    echo 'Setting fstab'
+    set_fstab
+    sleep 3
+
     echo 'Chrooting into installed system to continue setup...'
     cp $0 /mnt/setup.sh
     arch-chroot /mnt ./setup.sh chroot
@@ -140,9 +144,6 @@ configure() {
 
     echo 'Setting hosts file'
     set_hosts "$HOSTNAME"
-
-    echo 'Setting fstab'
-    set_fstab 
 
     echo 'Setting initial modules to load'
     set_modules_load
