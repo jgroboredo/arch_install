@@ -244,7 +244,7 @@ install_packages() {
     packages+=' gvfs sshfs flameshot zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions xautolock'
 
     #Final packages2
-    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome'
+    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome cpupower'
 
     # On Intel processors
     packages+=' intel-ucode'
@@ -412,6 +412,7 @@ EOF
 set_daemons() {
     local tmp_on_tmpfs="$1"; shift
 
+    systemctl daemon-reload
     systemctl enable cpupower.service ntpd.service
     systemctl enable NetworkManager
     systemctl enable bluetooth
