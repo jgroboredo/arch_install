@@ -244,7 +244,7 @@ install_packages() {
     packages+=' gvfs sshfs flameshot zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions xautolock'
 
     #Final packages2
-    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome cpupower'
+    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome cpupower ntp'
 
     # On Intel processors
     packages+=' intel-ucode'
