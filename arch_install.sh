@@ -229,7 +229,7 @@ unmount_filesystems() {
 install_packages() {
     local packages=''
 
-    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools base-devel linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake'
+    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake'
 
     # Libreoffice
     packages+=' libreoffice-fresh hyphen-en mythes-en'
@@ -418,6 +418,7 @@ set_daemons() {
     systemctl enable bluetooth
     systemctl enable fstrim.timer
     systemctl enable tlp.service
+    systemctl enable lightdm
 
     if [ -z "$tmp_on_tmpfs" ]
     then
@@ -530,101 +531,6 @@ EOF
     chmod 440 /etc/sudoers
 }
 
-set_slim() {
-    cat > /etc/slim.conf <<EOF
-# Path, X server and arguments (if needed)
-# Note: -xauth $authfile is automatically appended
-default_path        /bin:/usr/bin:/usr/local/bin
-default_xserver     /usr/bin/X
-xserver_arguments -nolisten tcp vt07
-
-# Commands for halt, login, etc.
-halt_cmd            /sbin/poweroff
-reboot_cmd          /sbin/reboot
-console_cmd         /usr/bin/xterm -C -fg white -bg black +sb -T "Console login" -e /bin/sh -c "/bin/cat /etc/issue; exec /bin/login"
-suspend_cmd         /usr/bin/systemctl hybrid-sleep
-
-# Full path to the xauth binary
-xauth_path         /usr/bin/xauth 
-
-# Xauth file for server
-authfile           /var/run/slim.auth
-
-# Activate numlock when slim starts. Valid values: on|off
-# numlock             on
-
-# Hide the mouse cursor (note: does not work with some WMs).
-# Valid values: true|false
-# hidecursor          false
-
-# This command is executed after a succesful login.
-# you can place the %session and %theme variables
-# to handle launching of specific commands in .xinitrc
-# depending of chosen session and slim theme
-#
-# NOTE: if your system does not have bash you need
-# to adjust the command according to your preferred shell,
-# i.e. for freebsd use:
-# login_cmd           exec /bin/sh - ~/.xinitrc %session
-# login_cmd           exec /bin/bash -login ~/.xinitrc %session
-login_cmd           exec /bin/zsh -l ~/.xinitrc %session
-
-# Commands executed when starting and exiting a session.
-# They can be used for registering a X11 session with
-# sessreg. You can use the %user variable
-#
-# sessionstart_cmd	some command
-# sessionstop_cmd	some command
-
-# Start in daemon mode. Valid values: yes | no
-# Note that this can be overriden by the command line
-# options "-d" and "-nodaemon"
-# daemon	yes
-
-# Available sessions (first one is the default).
-# The current chosen session name is replaced in the login_cmd
-# above, so your login command can handle different sessions.
-# see the xinitrc.sample file shipped with slim sources
-sessions            foo
-
-# Executed when pressing F11 (requires imagemagick)
-#screenshot_cmd      import -window root /slim.png
-
-# welcome message. Available variables: %host, %domain
-welcome_msg         %host
-
-# Session message. Prepended to the session name when pressing F1
-# session_msg         Session: 
-
-# shutdown / reboot messages
-shutdown_msg       The system is shutting down...
-reboot_msg         The system is rebooting...
-
-# default user, leave blank or remove this line
-# for avoid pre-loading the username.
-#default_user        simone
-
-# Focus the password field on start when default_user is set
-# Set to "yes" to enable this feature
-#focus_password      no
-
-# Automatically login the default user (without entering
-# the password. Set to "yes" to enable this feature
-#auto_login          no
-
-# current theme, use comma separated list to specify a set to 
-# randomly choose from
-#current_theme       default
-current_theme       archlinux-simplyblack
-
-# Lock file
-lockfile            /run/lock/slim.lock
-
-# Log file
-logfile             /var/log/slim.log
-EOF
-}
-
 set_root_password() {
     local password="$1"; shift
 
@@ -635,7 +541,7 @@ create_user() {
     local name="$1"; shift
     local password="$1"; shift
 
-    useradd -m -s /bin/zsh -G adm,systemd-journal,wheel,rfkill,games,network,video,audio,optical,floppy,storage,scanner,power,adbusers,wireshark "$name"
+    useradd -m -s /bin/zsh -G adm,systemd-journal,wheel,rfkill,games,network,video,audio,optical,floppy,storage,scanner,power "$name"
     echo -en "$password\n$password" | passwd "$name"
 }
 
