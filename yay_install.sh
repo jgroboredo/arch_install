@@ -15,7 +15,15 @@ install_aur_packages() {
     yay -S --noconfirm hamsket-bin
     yay -S --noconfirm polkit-gnome
     yay -S --noconfirm pa-applet-git
-    yay -S pavucontrol
+    yay -S --noconfirm pop-gtk-theme-git
+    yay -S --noconfirm pop-icon-theme-git
+    yay -S --noconfirm vim-plug-git
+    yay -S --noconfirm vim-youcompleteme-git
+    yay -S --noconfirm visual-studio-code-bin
+    yay -S --noconfirm zoom
+    yay -S --noconfirm hunspell-pt_pt
+    yay -S --noconfirm textext
+    yay -S --noconfirm qtgrace
 }
 
 echo 'Installing yay'

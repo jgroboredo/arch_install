@@ -61,7 +61,7 @@ TIMEZONE='Europe/Lisbon'
 TMP_ON_TMPFS='TRUE'
 
 KEYMAP='us'
-# KEYMAP='dvorak'
+# KEYMAP='pt-latin1'
 
 # Choose your video driver
 # For Intel
@@ -72,11 +72,6 @@ VIDEO_DRIVER="i915"
 #VIDEO_DRIVER="radeon"
 # For generic stuff
 #VIDEO_DRIVER="vesa"
-
-# Wireless device, leave blank to not use wireless and use DHCP instead.
-WIRELESS_DEVICE=""
-# For tc4200's
-#WIRELESS_DEVICE="eth1"
 
 setup() {
     local boot_dev="$DRIVE"1
@@ -160,14 +155,18 @@ configure() {
     echo 'Configuring sudo'
     set_sudoers
 
-    echo 'Configuring slim'
-    #set_slim
-
     if [ -z "$ROOT_PASSWORD" ]
     then
         echo 'Enter the root password:'
-        stty -echo
-        read ROOT_PASSWORD
+        while true; do
+            read -s -p "Password: " password
+            echo
+            read -s -p "Password (again): " password2
+            echo
+            [ "$password" = "$password2" ] && break
+            echo "Please try again"
+        done
+        ROOT_PASSWORD=$password
         stty echo
     fi
     echo 'Setting root password'
@@ -176,8 +175,15 @@ configure() {
     if [ -z "$USER_PASSWORD" ]
     then
         echo "Enter the password for user $USER_NAME"
-        stty -echo
-        read USER_PASSWORD
+        while true; do
+            read -s -p "Password: " password
+            echo
+            read -s -p "Password (again): " password2
+            echo
+            [ "$password" = "$password2" ] && break
+            echo "Please try again"
+        done
+        USER_PASSWORD=$password
         stty echo
     fi
     echo 'Creating initial user'
@@ -229,22 +235,43 @@ unmount_filesystems() {
 install_packages() {
     local packages=''
 
-    packages+=' sudo grub efibootmgr os-prober networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pulseaudio-bluetooth git reflector cmake'
+    packages+=' networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pavucontrol pulseaudio-bluetooth git reflector cmake'
+    
+    #grub related
+    packages+=' sudo grub efibootmgr os-prober'
 
     # Libreoffice
     packages+=' libreoffice-fresh hyphen-en mythes-en'
+    
+    #i3 related
+    packages+=' i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings picom'
 
+    #xfce4
+    packages+=' xfce4-terminal xfce4-power-manager xfce4-notifyd'
+    
     # Misc programs
-    packages+=' mpv xorg i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings firefox nitrogen picom lxappearance pcmanfm materia-gtk-theme papirus-icon-theme xfce4-terminal archlinux-wallpaper mlocate'
+    packages+=' mpv xorg firefox nitrogen lxappearance pcmanfm materia-gtk-theme papirus-icon-theme archlinux-wallpaper mlocate flameshot xautolock sshfs neofetch guake'
 
     # Fonts
-    packages+=' ttf-dejavu ttf-liberation noto-fonts'
+    packages+=' ttf-dejavu ttf-liberation noto-fonts otf-font-awesome'
 
-    #Final packages1
-    packages+=' gvfs sshfs flameshot zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions xautolock'
+    #Automount usb devices
+    packages+=' gvfs gvfs-afc gvfs-goa gvfs-google gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-smb'
 
-    #Final packages2
-    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip otf-font-awesome cpupower ntp'
+    #ZSH related
+    packages+=' zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions'
+    
+    #Some tools (xrandr, net)
+    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp'
+
+    #working tools
+    packages+=' zathura zhatura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux'
+
+    #dictionaries
+    packages+=' nuspell hspell libvoikko hunspell-en_US'
+
+    #thumbnails
+    packages+=' poppler-glib ffmpegthumbnailer freetype2 raw-thumbnailer'
 
     # On Intel processors
     packages+=' intel-ucode'
