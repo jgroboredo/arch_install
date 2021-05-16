@@ -24,6 +24,7 @@ install_aur_packages() {
     yay -S --noconfirm hunspell-pt_pt
     yay -S --noconfirm textext
     yay -S --noconfirm qtgrace
+    yay -S --noconfirm dmenu-extended
 }
 
 echo 'Installing yay'

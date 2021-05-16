@@ -262,7 +262,7 @@ install_packages() {
     packages+=' zsh zsh-theme-powerlevel10k zsh-syntax-highlighting zsh-completions'
     
     #Some tools (xrandr, net)
-    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp'
+    packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp xarchiver p7zip'
 
     #working tools
     packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux'
