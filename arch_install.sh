@@ -60,8 +60,8 @@ TIMEZONE='Europe/Lisbon'
 # Only leave this blank on systems with very little RAM.
 TMP_ON_TMPFS='TRUE'
 
-KEYMAP='us'
-# KEYMAP='pt-latin1'
+#KEYMAP='us'
+KEYMAP='pt-latin1'
 
 # Choose your video driver
 # For Intel
@@ -250,7 +250,7 @@ install_packages() {
     packages+=' xfce4-terminal xfce4-power-manager xfce4-notifyd'
     
     # Misc programs
-    packages+=' mpv xorg firefox nitrogen lxappearance pcmanfm materia-gtk-theme papirus-icon-theme archlinux-wallpaper mlocate flameshot xautolock sshfs neofetch guake'
+    packages+=' mpv xorg firefox nitrogen lxappearance pcmanfm materia-gtk-theme papirus-icon-theme archlinux-wallpaper mlocate flameshot xautolock sshfs neofetch guake expac'
 
     # Fonts
     packages+=' ttf-dejavu ttf-liberation noto-fonts otf-font-awesome'
@@ -265,13 +265,13 @@ install_packages() {
     packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp xarchiver p7zip'
 
     #working tools
-    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux'
+    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux viewnior rsync python-pywal evince'
 
     #dictionaries
     packages+=' nuspell hspell libvoikko hunspell-en_US'
 
     #thumbnails
-    packages+=' poppler-glib ffmpegthumbnailer freetype2 raw-thumbnailer'
+    packages+=' tumbler poppler-glib ffmpegthumbnailer freetype2 raw-thumbnailer libgsf libgepub'
 
     # On Intel processors
     packages+=' intel-ucode'

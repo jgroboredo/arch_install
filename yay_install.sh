@@ -25,6 +25,9 @@ install_aur_packages() {
     yay -S --noconfirm textext
     yay -S --noconfirm qtgrace
     yay -S --noconfirm dmenu-extended
+    yay -S --noconfirm fzwal-git
+    yay -S --noconfirm mimeo
+    yay -S --noconfirm xdg-utils-mimeo
 }
 
 echo 'Installing yay'
