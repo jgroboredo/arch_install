@@ -192,6 +192,9 @@ configure() {
     echo 'Building locate database'
     update_locate
 
+    echo 'Installing yay and AUR packages'
+    #install_yay "$USER_NAME"
+
     rm /setup.sh
 }
 
@@ -571,6 +574,41 @@ create_user() {
     useradd -m -s /bin/zsh -G adm,systemd-journal,wheel,rfkill,games,network,video,audio,optical,floppy,storage,scanner,power "$name"
     echo -en "$password\n$password" | passwd "$name"
 }
+
+install_yay() {
+    local ARCH_AUR_HELPER="yay"
+    local ARCH_ADMIN="$1"; shift
+    local packages=''
+
+    if [ "$ARCH_AUR_HELPER" == 'none' ]; then
+        printline '-'
+        info "Skipping AUR helper"
+        printline '-'
+    else
+        printline '-'
+        info "Installing AUR helper '$ARCH_AUR_HELPER'"
+        printline '-'
+
+        AUR_HELPER_CLONE_DIR=/home/$ARCH_ADMIN/.cache/arch-install/aur_helper
+        su -P "$ARCH_ADMIN" -c "mkdir -p $AUR_HELPER_CLONE_DIR"
+        su -P "$ARCH_ADMIN" -c "cd $AUR_HELPER_CLONE_DIR; git clone https://aur.archlinux.org/$ARCH_AUR_HELPER.git"
+        su -P "$ARCH_ADMIN" -c "cd $AUR_HELPER_CLONE_DIR/$ARCH_AUR_HELPER; makepkg -s"
+        pacman --noconfirm -U "$AUR_HELPER_CLONE_DIR/$ARCH_AUR_HELPER/$ARCH_AUR_HELPER"*.pkg.tar*
+
+        if [ -f "/etc/paru.conf" ]; then
+            sed -i 's/^#BottomUp/BottomUp/' /etc/paru.conf
+            sed -i 's/^#NewsOnUpgrade/NewsOnUpgrade/' /etc/paru.conf
+        fi
+
+        packages+=' acpi pamac-aur clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git pop-gtk-theme-git pop-icon-theme-git'
+        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended'
+
+        # == install packages from AUR ==
+        su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S --noconfirm $packages"
+    fi
+
+}
+
 
 update_locate() {
     updatedb
