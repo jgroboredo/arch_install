@@ -638,13 +638,13 @@ install_yay() {
     local packages=''
 
     if [ "$ARCH_AUR_HELPER" == 'none' ]; then
-        printline '-'
-        info "Skipping AUR helper"
-        printline '-'
+        echo '-'
+        echo "Skipping AUR helper"
+        echo '-'
     else
-        printline '-'
-        info "Installing AUR helper '$ARCH_AUR_HELPER'"
-        printline '-'
+        echo '-'
+        echo "Installing AUR helper '$ARCH_AUR_HELPER'"
+        echo '-'
 
         AUR_HELPER_CLONE_DIR=/home/$ARCH_ADMIN/.cache/arch-install/aur_helper
         su -P "$ARCH_ADMIN" -c "mkdir -p $AUR_HELPER_CLONE_DIR"
@@ -661,7 +661,7 @@ install_yay() {
         packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended fzwal-git mimeo xdg-utils-mimeo'
 
         # == install packages from AUR ==
-        su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S --noconfirm $packages"
+        su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S $packages"
     fi
 
 }
