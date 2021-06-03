@@ -91,8 +91,8 @@ configure() {
     local root_dev="$DRIVE"3
     
     # uncommenting multilib line in pacman config
-    sed '/^#\[multilib]/{N;s/\n#/\n/}' /etc/pacman.conf
-    sed -i 's/#\[multilib]/\[multilib]/g' /etc/pacman.conf
+    pacman_enable_repo 'multilib'
+    sed -i '/ParallelDownloads/s/^#//g' /etc/pacman.conf 
 
     if [ -z "$HOSTNAME" ]
     then
@@ -248,6 +248,11 @@ install_base() {
 unmount_filesystems() {
     umount -a
 }
+
+pacman_enable_repo() {
+    sed -i "/\[$1\]/,/Include/"'s/^#//' /etc/pacman.conf
+}
+
 
 install_packages() {
     local packages=''
