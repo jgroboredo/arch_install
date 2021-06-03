@@ -89,6 +89,10 @@ setup() {
 configure() {
     local boot_dev="$DRIVE"1
     local root_dev="$DRIVE"3
+    
+    # uncommenting multilib line in pacman config
+    sed '/^#\[multilib]/{N;s/\n#/\n/}' /etc/pacman.conf
+    sed -i 's/#\[multilib]/\[multilib]/g' /etc/pacman.conf
 
     if [ -z "$HOSTNAME" ]
     then
