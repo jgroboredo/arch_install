@@ -41,14 +41,42 @@
 # Drive to install to.
 DRIVE='/dev/sda'
 
-# Hostname of the installed machine.
-HOSTNAME='goncalo'
+# Hostname of the installed machine (leave blank to be prompted).
+HOSTNAME=''
+if [ -z "$HOSTNAME" ]
+then
+    echo 'Enter the hostname of the computer:'
+    while true; do
+        read -s -p "Hostname: " host_name
+        echo
+        read -s -p "Hostname (again): " host_name2
+        echo
+        [ "$host_name" = "$host_name2" ] && break
+        echo "Inputs do not match"
+    done
+    HOSTNAME=$host_name
+    stty echo
+fi 
 
 # Root password (leave blank to be prompted).
 ROOT_PASSWORD=''
 
-# Main user to create (by default, added to wheel group, and others).
-USER_NAME='goncalo'
+# Main user to create (by default, added to wheel group, and others) (leave blank to be prompted).
+USER_NAME=''
+if [ -z "$USER_NAME" ]
+then
+    echo 'Enter the username of the account:'
+    while true; do
+        read -s -p "Username: " user_name
+        echo
+        read -s -p "Username (again): " user_name2
+        echo
+        [ "$user_name" = "$user_name2" ] && break
+        echo "Inputs do not match"
+    done
+    USER_NAME=$user_name
+    stty echo
+fi 
 
 # The main user's password (leave blank to be prompted).
 USER_PASSWORD=''
@@ -63,15 +91,24 @@ TMP_ON_TMPFS='TRUE'
 #KEYMAP='us'
 KEYMAP='pt-latin1'
 
+#swap_size(GB)
+SWAP_SIZE='2'
+
 # Choose your video driver
 # For Intel
 VIDEO_DRIVER="i915"
-# For nVidia
-#VIDEO_DRIVER="nouveau"
-# For ATI
-#VIDEO_DRIVER="radeon"
-# For generic stuff
-#VIDEO_DRIVER="vesa"
+
+# For nVidia + intel
+#VIDEO_DRIVER="intel-nvidia"
+
+# For nVidia + amd
+#VIDEO_DRIVER="amd-nvidia"
+
+# For ATI + intel
+#VIDEO_DRIVER="intel-radeon"
+
+# For ATI + intel
+#VIDEO_DRIVER="amd-radeon"
 
 setup() {
     local boot_dev="$DRIVE"1
@@ -118,6 +155,15 @@ setup() {
 configure() {
     local boot_dev="$DRIVE"1
     local root_dev="$DRIVE"3
+
+    CPU_VENDOR=$(grep vendor /proc/cpuinfo | uniq)
+    if echo "$CPU_VENDOR" | grep -q -i intel; then
+        ARCH_CPU_BRAND='intel'
+    elif echo "$CPU_VENDOR" | grep -q -i amd; then
+        ARCH_CPU_BRAND='amd'
+    else
+        echo "Unrecognized CPU vendor $CPU_VENDOR"
+    fi
 
     echo 'Installing additional packages'
     install_packages
@@ -193,7 +239,7 @@ configure() {
     update_locate
 
     echo 'Installing yay and AUR packages'
-    #install_yay "$USER_NAME"
+    install_yay "$USER_NAME"
 
     rm /setup.sh
 }
@@ -204,8 +250,8 @@ partition_drive() {
     parted -s "$dev" \
         mklabel gpt \
         mkpart P1 'fat32' '1MiB' '550MiB' \
-        mkpart P2 'linux-swap' '550MiB' '2550MiB' \
-        mkpart P3 'ext4' '2550MiB' '100%' \
+        mkpart P2 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
+        mkpart P3 'ext4' "${SWAP_SIZE}550MiB" '100%' \
         set 1 esp on 
 }
 
@@ -238,25 +284,37 @@ unmount_filesystems() {
 install_packages() {
     local packages=''
 
-    packages+=' networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers bluez bluez-utils xdg-utils xdg-user-dirs alsa-utils pulseaudio pavucontrol pulseaudio-bluetooth git reflector cmake'
+    # basic tools
+    packages+=' sudo xorg networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers' 
+    packages+=' bluez bluez-utils xdg-utils xdg-user-dirs git reflector cmake expac'
+    packages+=' mlocate sshfs neofetch'
     
+    #audio
+    packages+=' pulseaudio pavucontrol alsa-utils pulseaudio-bluetooth'
+
+    #video
+    packages+=' mpv'
+
+    #browser
+    packages+=' chromium firefox'
+
     #grub related
-    packages+=' sudo grub efibootmgr os-prober'
+    packages+=' grub efibootmgr os-prober'
 
     # Libreoffice
     packages+=' libreoffice-fresh hyphen-en mythes-en'
     
-    #i3 related
-    packages+=' i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings picom'
+    # i3
+    packages+=' i3 dmenu lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings picom guake pcmanfm xautolock flameshot'
 
-    #xfce4
+    # xfce4
     packages+=' xfce4-terminal xfce4-power-manager xfce4-notifyd'
     
-    # Misc programs
-    packages+=' mpv xorg firefox nitrogen lxappearance pcmanfm materia-gtk-theme papirus-icon-theme archlinux-wallpaper mlocate flameshot xautolock sshfs neofetch guake expac'
-
     # Fonts
     packages+=' ttf-dejavu ttf-liberation noto-fonts otf-font-awesome'
+
+    # Themes, wallpapers and related apps
+    packages+=' papirus-icon-theme materia-gtk-theme lxappearance nitrogen archlinux-wallpaper'
 
     #Automount usb devices
     packages+=' gvfs gvfs-afc gvfs-goa gvfs-google gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-smb'
@@ -276,24 +334,44 @@ install_packages() {
     #thumbnails
     packages+=' tumbler poppler-glib ffmpegthumbnailer freetype2 raw-thumbnailer libgsf libgepub'
 
-    # On Intel processors
-    packages+=' intel-ucode'
+    # microcode for cpus
+    packages+=" ${ARCH_CPU_BRAND}-ucode"
 
     # For laptops
     packages+=' xf86-input-libinput'
 
+    # Gpu
     if [ "$VIDEO_DRIVER" = "i915" ]
     then
-        packages+=' xf86-video-intel libva-intel-driver'
-    elif [ "$VIDEO_DRIVER" = "nouveau" ]
+        packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
+        packages+=' intel-compute-runtime intel-gpu-tools'
+
+    elif [ "$VIDEO_DRIVER" = "intel-nvidia" ]
     then
-        packages+=' xf86-video-nouveau'
-    elif [ "$VIDEO_DRIVER" = "radeon" ]
+        packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
+        packages+=' intel-compute-runtime intel-gpu-tools'
+
+        packages+=' nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libglvnd lib32-libglvnd'
+        packages+=' libvdpau lib32-libvdpau opencl-nvidia'
+    
+    elif [ "$VIDEO_DRIVER" = "amd-nvidia" ]
     then
-        packages+=' xf86-video-ati'
-    elif [ "$VIDEO_DRIVER" = "vesa" ]
+        packages+=' nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libglvnd lib32-libglvnd'
+        packages+=' libvdpau lib32-libvdpau opencl-nvidia'
+
+    elif [ "$VIDEO_DRIVER" = "intel-radeon" ]
     then
-        packages+=' xf86-video-vesa'
+        packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
+        packages+=' intel-compute-runtime intel-gpu-tools'
+
+        packages+=' mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver'
+        packages+=' mesa-vdpau lib32-mesa-vdpau opencl-mesa radeontop'
+    
+    elif [ "$VIDEO_DRIVER" = "amd-radeon" ]
+    then
+        packages+=' mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver'
+        packages+=' mesa-vdpau lib32-mesa-vdpau opencl-mesa radeontop'
+
     fi
 
     pacman -Sy --noconfirm $packages
@@ -352,10 +430,16 @@ set_initcpio() {
     if [ "$VIDEO_DRIVER" = "i915" ]
     then
         vid='i915'
-    elif [ "$VIDEO_DRIVER" = "nouveau" ]
+    elif [ "$VIDEO_DRIVER" = "intel-nvidia" ]
     then
-        vid='nouveau'
-    elif [ "$VIDEO_DRIVER" = "radeon" ]
+        vid='nvidia'
+    elif [ "$VIDEO_DRIVER" = "amd-nvidia" ]
+    then
+        vid='nvidia'
+    elif [ "$VIDEO_DRIVER" = "intel-radeon" ]
+    then
+        vid='radeon'
+    elif [ "$VIDEO_DRIVER" = "amd-radeon" ]
     then
         vid='radeon'
     fi
@@ -600,8 +684,8 @@ install_yay() {
             sed -i 's/^#NewsOnUpgrade/NewsOnUpgrade/' /etc/paru.conf
         fi
 
-        packages+=' acpi pamac-aur clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git pop-gtk-theme-git pop-icon-theme-git'
-        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended'
+        packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git pop-gtk-theme-git pop-icon-theme-git'
+        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended fzwal-git mimeo xdg-utils-mimeo'
 
         # == install packages from AUR ==
         su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S --noconfirm $packages"
