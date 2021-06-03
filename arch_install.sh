@@ -1,82 +1,16 @@
 #!/bin/bash
-# Copyright (c) 2012 Tom Wambold
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# This script will set up an Arch installation with a 100 MB /boot partition
-# and an encrypted LVM partition with swap and / inside.  It also installs
-# and configures systemd as the init system (removing sysvinit).
-#
-# You should read through this script before running it in case you want to
-# make any modifications, in particular, the variables just below, and the
-# following functions:
-#
-#    partition_drive - Customize to change partition sizes (/boot vs LVM)
-#    setup_lvm - Customize for partitions inside LVM
-#    install_packages - Customize packages installed in base system
-#                       (desktop environment, etc.)
-#    install_aur_packages - More packages after packer (AUR helper) is
-#                           installed
-#    set_netcfg - Preload netcfg profiles
-
-## CONFIGURE THESE VARIABLES
-## ALSO LOOK AT THE install_packages FUNCTION TO SEE WHAT IS ACTUALLY INSTALLED
 
 # Drive to install to.
 DRIVE='/dev/sda'
 
 # Hostname of the installed machine (leave blank to be prompted).
 HOSTNAME=''
-if [ -z "$HOSTNAME" ]
-then
-    echo 'Enter the hostname of the computer:'
-    while true; do
-        read -s -p "Hostname: " host_name
-        echo
-        read -s -p "Hostname (again): " host_name2
-        echo
-        [ "$host_name" = "$host_name2" ] && break
-        echo "Inputs do not match"
-    done
-    HOSTNAME=$host_name
-    stty echo
-fi 
 
 # Root password (leave blank to be prompted).
 ROOT_PASSWORD=''
 
 # Main user to create (by default, added to wheel group, and others) (leave blank to be prompted).
 USER_NAME=''
-if [ -z "$USER_NAME" ]
-then
-    echo 'Enter the username of the account:'
-    while true; do
-        read -s -p "Username: " user_name
-        echo
-        read -s -p "Username (again): " user_name2
-        echo
-        [ "$user_name" = "$user_name2" ] && break
-        echo "Inputs do not match"
-    done
-    USER_NAME=$user_name
-    stty echo
-fi 
 
 # The main user's password (leave blank to be prompted).
 USER_PASSWORD=''
@@ -155,6 +89,36 @@ setup() {
 configure() {
     local boot_dev="$DRIVE"1
     local root_dev="$DRIVE"3
+
+    if [ -z "$HOSTNAME" ]
+    then
+        echo 'Enter the hostname of the computer:'
+        while true; do
+            read -p "Hostname: " host_name
+            echo
+            read -p "Hostname (again): " host_name2
+            echo
+            [ "$host_name" = "$host_name2" ] && break
+            echo "Inputs do not match"
+        done
+        HOSTNAME=$host_name
+        stty echo
+    fi 
+
+    if [ -z "$USER_NAME" ]
+    then
+        echo 'Enter the username of the account:'
+        while true; do
+            read -p "Username: " user_name
+            echo
+            read -p "Username (again): " user_name2
+            echo
+            [ "$user_name" = "$user_name2" ] && break
+            echo "Inputs do not match"
+        done
+        USER_NAME=$user_name
+        stty echo
+    fi 
 
     CPU_VENDOR=$(grep vendor /proc/cpuinfo | uniq)
     if echo "$CPU_VENDOR" | grep -q -i intel; then
