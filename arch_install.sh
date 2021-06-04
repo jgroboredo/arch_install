@@ -44,23 +44,32 @@ VIDEO_DRIVER="i915"
 # For ATI + intel
 #VIDEO_DRIVER="amd-radeon"
 
+if [ -d /sys/firmware/efi ]; then
+    BIOS_TYPE="uefi"
+else
+    BIOS_TYPE="bios"
+fi 
+
+
+
 setup() {
     local boot_dev="$DRIVE"1
     local swap_dev="$DRIVE"2
     local root_dev="$DRIVE"3 
+    local bios="$BIOS_TYPE"
 
     echo 'Updating system clock'
     timedatectl set-ntp true
 
     echo 'Creating partitions'
-    partition_drive "$DRIVE"
+    partition_drive "$DRIVE" "$bios"
     sleep 3
 
     echo 'Formatting filesystems'
-    format_filesystems "$DRIVE"
+    format_filesystems "$DRIVE" "$bios"
 
     echo 'Mounting filesystems'
-    mount_filesystems "$DRIVE"
+    mount_filesystems "$DRIVE" 
     sleep 3
 
     echo 'Installing base system'
@@ -87,8 +96,10 @@ setup() {
 }
 
 configure() {
+    local DEVICE="$DRIVE"
     local boot_dev="$DRIVE"1
     local root_dev="$DRIVE"3
+    local bios="$BIOS_TYPE"
     
     # uncommenting multilib line in pacman config
     pacman_enable_repo 'multilib'
@@ -133,6 +144,7 @@ configure() {
         echo "Unrecognized CPU vendor $CPU_VENDOR"
     fi
 
+    
     echo 'Installing additional packages'
     install_packages
 
@@ -164,7 +176,7 @@ configure() {
     set_daemons "$TMP_ON_TMPFS"
 
     echo 'Configuring bootloader'
-    set_grub
+    set_grub "$bios" "$DEVICE"
 
     echo 'Configuring sudo'
     set_sudoers
@@ -214,21 +226,43 @@ configure() {
 
 partition_drive() {
     local dev="$1"; shift
+    local bios="$1"; shift 
 
-    parted -s "$dev" \
-        mklabel gpt \
-        mkpart P1 'fat32' '1MiB' '550MiB' \
-        mkpart P2 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
-        mkpart P3 'ext4' "${SWAP_SIZE}550MiB" '100%' \
-        set 1 esp on 
+    if [ "$bios" == "uefi" ]; then
+        parted -s "$dev" \
+            mklabel gpt \
+            mkpart P1 'fat32' '1MiB' '550MiB' \
+            mkpart P2 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
+            mkpart P3 'ext4' "${SWAP_SIZE}550MiB" '100%' \
+            set 1 esp on
+    fi
+
+    if [ "$bios" == "bios" ]; then
+        parted -s "$dev" \
+            mklabel msdos \
+            mkpart P1 'ext4' '4MiB' '512MiB' \
+            mkpart P2 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
+            mkpart P3 'ext4' "${SWAP_SIZE}550MiB" '100%' \
+            set 1 boot on
+    fi
+
 }
 
 format_filesystems() {
     local drive="$1"; shift
+    local bios="$1"; shift
 
-    mkfs.fat -F32 "$drive"1
-    mkfs.ext4 "$drive"3
-    mkswap "$drive"2; swapon "$drive"2
+    if [ "$bios" == "uefi" ]; then
+        mkfs.fat -F32 "$drive"1
+        mkfs.ext4 "$drive"3
+        mkswap "$drive"2; swapon "$drive"2
+    fi
+
+    if [ "$bios" == "bios" ]; then
+        mkfs.ext4 -L boot "$drive"1
+        mkfs.ext4 "$drive"3
+        mkswap "$drive"2; swapon "$drive"2
+    fi
 }
 
 mount_filesystems() {
@@ -405,7 +439,7 @@ set_initcpio() {
         vid='i915'
     elif [ "$VIDEO_DRIVER" = "intel-nvidia" ]
     then
-        vid='nvidia'
+        vid='nvidia nvidia_modeset nvidia_uvm nvidia_drm'
     elif [ "$VIDEO_DRIVER" = "amd-nvidia" ]
     then
         vid='nvidia'
@@ -514,8 +548,18 @@ set_daemons() {
 }
 
 set_grub() {
-    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-    grub-mkconfig -o /boot/grub/grub.cfg
+    local bios="$1"; shift 
+    local device="$1"; shift 
+    
+    if [ "$bios" == "uefi" ]; then 
+        grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+        grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+
+    if [ "$bios" == "bios" ]; then 
+        grub-install --target=i386-pc --recheck $device 
+        grub-mkconfig -o /boot/grub/grub.cfg
+    fi
 }
 
 set_sudoers() {
