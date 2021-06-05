@@ -239,9 +239,9 @@ partition_drive() {
     if [ "$bios" == "bios" ]; then
         parted -s "$dev" \
             mklabel msdos \
-            mkpart P1 'ext4' '4MiB' '512MiB' \
-            mkpart P2 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
-            mkpart P3 'ext4' "${SWAP_SIZE}550MiB" '100%' \
+            mkpart primary 'ext4' '4MiB' '512MiB' \
+            mkpart primary 'linux-swap' '550MiB' "${SWAP_SIZE}550MiB" \
+            mkpart primary 'ext4' "${SWAP_SIZE}550MiB" '100%' \
             set 1 boot on
     fi
 
