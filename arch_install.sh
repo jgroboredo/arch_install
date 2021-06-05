@@ -220,6 +220,9 @@ configure() {
     echo 'Installing yay and AUR packages'
     install_yay "$USER_NAME"
 
+    echo 'Installing dotfiles'
+    dot_files "$USER_NAME"
+
     rm /setup.sh
 }
 
@@ -707,6 +710,29 @@ install_yay() {
         su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S $packages"
     fi
 
+}
+
+dot_files() {
+    local ARCH_ADMIN="$1"; shift
+
+    DOTFILES_CLONE_DIR=/home/$ARCH_ADMIN/Documents
+    ZSHAUTO_CLONE_DIR=/home/$ARCH_ADMIN/.config
+
+    #Creating vim pluggins directory
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.vim/plugged"
+
+    #Cloning needed repositories
+    su -P "$ARCH_ADMIN" -c "cd $ZSHAUTO_CLONE_DIR; git clone https://github.com/zsh-users/zsh-autosuggestions.git"
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR; git clone https://github.com/jgroboredo/lap_dotfiles.git"
+
+    #Installing dotfiles
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles; sudo chmod +x install_bin.sh; sudo ./install_bin.sh"
+
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles; sudo chmod +x install_dotfiles.sh; ./install_dotfiles.sh"
+
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/grub_theme; sudo chmod +x install.sh; sudo ./install.sh"
+
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/lyx; sudo chmod +x install_lyx_conf.sh; ./install_lyx_conf.sh"
 }
 
 
