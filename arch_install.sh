@@ -716,11 +716,19 @@ dot_files() {
     local ARCH_ADMIN="$1"; shift
 
     DOTFILES_CLONE_DIR=/home/$ARCH_ADMIN/Documents
+    su -P "$ARCH_ADMIN" -c "mkdir -p $DOTFILES_CLONE_DIR"
     ZSHAUTO_CLONE_DIR=/home/$ARCH_ADMIN/.config
 
     #Creating vim pluggins directory
     su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.vim/plugged"
+    
+    #Creating cache directory for zsh
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.cache/zsh"
+    su -P "$ARCH_ADMIN" -c "cd /home/$ARCH_ADMIN/.cache/zsh; touch dirs"
 
+    #Creating lyx config folder
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.lyx"
+        
     #Cloning needed repositories
     su -P "$ARCH_ADMIN" -c "cd $ZSHAUTO_CLONE_DIR; git clone https://github.com/zsh-users/zsh-autosuggestions.git"
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR; git clone https://github.com/jgroboredo/lap_dotfiles.git"
@@ -733,6 +741,12 @@ dot_files() {
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/grub_theme; sudo chmod +x install.sh; sudo ./install.sh"
 
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/lyx; sudo chmod +x install_lyx_conf.sh; ./install_lyx_conf.sh"
+    
+    #Applying wal theme
+    su -P "$ARCH_ADMIN" -c "wal --theme base16-nord"
+
+    #Installing vim pluggins
+    su -P "$ARCH_ADMIN" -c "vim +'PlugInstall --sync' +qa"
 }
 
 
