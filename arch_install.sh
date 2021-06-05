@@ -143,14 +143,7 @@ configure() {
     else
         echo "Unrecognized CPU vendor $CPU_VENDOR"
     fi
-
     
-    echo 'Installing additional packages'
-    install_packages
-
-    echo 'Clearing package tarballs'
-    clean_packages
-
     echo 'Setting hostname'
     set_hostname "$HOSTNAME"
 
@@ -165,6 +158,12 @@ configure() {
 
     echo 'Setting hosts file'
     set_hosts "$HOSTNAME"
+    
+    echo 'Installing additional packages'
+    install_packages
+
+    echo 'Clearing package tarballs'
+    clean_packages
 
     echo 'Setting initial modules to load'
     set_modules_load
