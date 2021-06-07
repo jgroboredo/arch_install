@@ -353,7 +353,7 @@ install_packages() {
     if [ "$VIDEO_DRIVER" = "i915" ]
     then
         packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
-        packages+=' intel-compute-runtime intel-gpu-tools'
+        packages+=' intel-compute-runtime intel-gpu-tools intel-media-driver'
 
     elif [ "$VIDEO_DRIVER" = "intel-nvidia" ]
     then
