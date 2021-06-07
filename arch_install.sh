@@ -41,8 +41,11 @@ VIDEO_DRIVER="i915"
 # For ATI + intel
 #VIDEO_DRIVER="intel-radeon"
 
-# For ATI + intel
+# For ATI + amd
 #VIDEO_DRIVER="amd-radeon"
+
+# For amd
+#VIDEO_DRIVER="amd"
 
 if [ -d /sys/firmware/efi ]; then
     BIOS_TYPE="uefi"
@@ -324,6 +327,7 @@ install_packages() {
 
     # Themes, wallpapers and related apps
     packages+=' papirus-icon-theme materia-gtk-theme lxappearance nitrogen archlinux-wallpaper'
+    #packages+=' python-pywal'
 
     #Automount usb devices
     packages+=' gvfs gvfs-afc gvfs-goa gvfs-google gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-smb'
@@ -335,7 +339,7 @@ install_packages() {
     packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp xarchiver p7zip'
 
     #working tools
-    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux viewnior rsync python-pywal evince'
+    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux viewnior rsync evince'
 
     #dictionaries
     packages+=' nuspell hspell libvoikko hunspell-en_US'
@@ -358,13 +362,15 @@ install_packages() {
     elif [ "$VIDEO_DRIVER" = "intel-nvidia" ]
     then
         packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
-        packages+=' intel-compute-runtime intel-gpu-tools'
+        packages+=' intel-compute-runtime intel-gpu-tools intel-media-driver'
 
         packages+=' nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libglvnd lib32-libglvnd'
         packages+=' libvdpau lib32-libvdpau opencl-nvidia'
     
     elif [ "$VIDEO_DRIVER" = "amd-nvidia" ]
     then
+        packages+=' xf86-video-amdgpu'
+
         packages+=' nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libglvnd lib32-libglvnd'
         packages+=' libvdpau lib32-libvdpau opencl-nvidia'
 
@@ -378,8 +384,14 @@ install_packages() {
     
     elif [ "$VIDEO_DRIVER" = "amd-radeon" ]
     then
+        packages+=' xf86-video-amdgpu'
+
         packages+=' mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver'
         packages+=' mesa-vdpau lib32-mesa-vdpau opencl-mesa radeontop'
+    
+    elif [ "$VIDEO_DRIVER" = "amd" ]
+    then
+        packages+=' xf86-video-amdgpu mesa lib32-mesa'
 
     fi
 
@@ -450,7 +462,11 @@ set_initcpio() {
         vid='radeon'
     elif [ "$VIDEO_DRIVER" = "amd-radeon" ]
     then
-        vid='radeon'
+        vid='amdgpu radeon'
+    
+    elif [ "$VIDEO_DRIVER" = "amd" ]
+    then
+        vid='amdgpu'
     fi
 
     # Set MODULES with your video driver
@@ -461,7 +477,7 @@ set_initcpio() {
 # run.  Advanced users may wish to specify all system modules
 # in this array.  For instance:
 #     MODULES="piix ide_disk reiserfs"
-MODULES="ext4 $vid"
+MODULES="$vid ext4"
 
 # BINARIES
 # This setting includes any additional binaries a given user may
@@ -704,7 +720,8 @@ install_yay() {
         fi
 
         packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git pop-gtk-theme-git pop-icon-theme-git'
-        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended fzwal-git mimeo xdg-utils-mimeo'
+        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended mimeo xdg-utils-mimeo'
+        #packages+=' fzwal-git' 
 
         # == install packages from AUR ==
         su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S $packages"
@@ -743,7 +760,7 @@ dot_files() {
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/lyx; sudo chmod +x install_lyx_conf.sh; ./install_lyx_conf.sh"
     
     #Applying wal theme
-    su -P "$ARCH_ADMIN" -c "wal --theme base16-nord"
+    #su -P "$ARCH_ADMIN" -c "wal --theme base16-nord"
 
     #Installing vim pluggins
     su -P "$ARCH_ADMIN" -c "vim +'PlugInstall --sync' +qa"
