@@ -297,7 +297,7 @@ install_packages() {
     local packages=''
 
     # basic tools
-    packages+=' sudo xorg networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers' 
+    packages+=' sudo xorg networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers pacman-contrib' 
     packages+=' bluez bluez-utils xdg-utils xdg-user-dirs git reflector cmake expac'
     packages+=' mlocate sshfs neofetch'
     
@@ -326,7 +326,7 @@ install_packages() {
     packages+=' ttf-dejavu ttf-liberation noto-fonts otf-font-awesome'
 
     # Themes, wallpapers and related apps
-    packages+=' papirus-icon-theme materia-gtk-theme lxappearance nitrogen archlinux-wallpaper'
+    packages+=' papirus-icon-theme materia-gtk-theme lxappearance nitrogen archlinux-wallpaper arc-gtk-theme'
     #packages+=' python-pywal'
 
     #Automount usb devices
@@ -377,7 +377,7 @@ install_packages() {
     elif [ "$VIDEO_DRIVER" = "intel-radeon" ]
     then
         packages+=' xf86-video-intel libva-intel-driver mesa lib32-mesa vulkan-intel lib32-vulkan-intel'
-        packages+=' intel-compute-runtime intel-gpu-tools'
+        packages+=' intel-compute-runtime intel-gpu-tools intel-media-driver'
 
         packages+=' mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver'
         packages+=' mesa-vdpau lib32-mesa-vdpau opencl-mesa radeontop'
@@ -719,7 +719,11 @@ install_yay() {
             sed -i 's/^#NewsOnUpgrade/NewsOnUpgrade/' /etc/paru.conf
         fi
 
-        packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git pop-gtk-theme-git pop-icon-theme-git'
+        packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git' 
+        
+        #themes
+        packages+=' pop-gtk-theme-git pop-icon-theme-git arc-x-icons-theme'
+
         packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended mimeo xdg-utils-mimeo'
         #packages+=' fzwal-git' 
 
@@ -756,6 +760,8 @@ dot_files() {
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles; sudo chmod +x install_dotfiles.sh; ./install_dotfiles.sh"
 
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/grub_theme; sudo chmod +x install.sh; sudo ./install.sh"
+    
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/xorg; sudo chmod +x install_xorg_confs.sh; sudo ./install_xorg_confs.sh"
 
     su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/lyx; sudo chmod +x install_lyx_conf.sh; ./install_lyx_conf.sh"
     
