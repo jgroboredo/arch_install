@@ -722,7 +722,8 @@ install_yay() {
         packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git' 
         
         #themes
-        packages+=' pop-gtk-theme-git pop-icon-theme-git arc-x-icons-theme'
+        #packages+=' pop-gtk-theme-git pop-icon-theme-git'
+        packages+=' arc-x-icons-theme'
 
         packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended mimeo xdg-utils-mimeo'
         #packages+=' fzwal-git' 
