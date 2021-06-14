@@ -339,7 +339,7 @@ install_packages() {
     packages+=' arandr autorandr fuse2 htop inetutils net-tools netctl ntfs-3g pdf2svg tlp unzip cpupower ntp xarchiver p7zip'
 
     #working tools
-    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib inkscape texmaker texlive-langgreek tmux viewnior rsync evince'
+    packages+=' zathura zathura-pdf-poppler texlive-most lyx jupyter jupyterlab python-numpy python-matplotlib python-scipy inkscape texmaker texlive-langgreek tmux viewnior rsync evince'
 
     #dictionaries
     packages+=' nuspell hspell libvoikko hunspell-en_US'
