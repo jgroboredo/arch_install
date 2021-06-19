@@ -75,6 +75,12 @@ setup() {
     mount_filesystems "$DRIVE" 
     sleep 3
 
+    echo 'Faster pacstrap'
+    sed -i '/ParallelDownloads/s/^#//g' /etc/pacman.conf 
+
+    echo 'Updating mirrorlist'
+    update_mirrorlist
+
     echo 'Installing base system'
     install_base
     sleep 3
@@ -106,7 +112,10 @@ configure() {
     
     # uncommenting multilib line in pacman config
     pacman_enable_repo 'multilib'
-    sed -i '/ParallelDownloads/s/^#//g' /etc/pacman.conf 
+    sed -i '/ParallelDownloads/s/^#//g' /etc/pacman.conf
+
+    echo 'Updating mirrorlist'
+    update_mirrorlist
 
     if [ -z "$HOSTNAME" ]
     then
@@ -254,8 +263,14 @@ partition_drive() {
 }
 
 format_filesystems() {
-    local drive="$1"; shift
+    local drive1="$1"; shift
     local bios="$1"; shift
+
+    if [[ "$drive1" == /dev/nvme* ]]; then
+        local drive="${drive1}p"
+    else
+        local drive=$drive1
+    fi
 
     if [ "$bios" == "uefi" ]; then
         mkfs.fat -F32 "$drive"1
@@ -271,7 +286,14 @@ format_filesystems() {
 }
 
 mount_filesystems() {
-    local drive="$1"; shift
+    local drive1="$1"; shift
+
+    if [[ "$drive1" == /dev/nvme* ]]; then
+        local drive="${drive1}p"
+    else
+        local drive=$drive1
+    fi
+
 
     mount "$drive"3 /mnt
     mkdir /mnt/boot
@@ -281,7 +303,7 @@ mount_filesystems() {
 install_base() {
     echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
 
-    pacstrap /mnt base base-devel linux linux-firmware vim
+    pacstrap /mnt base base-devel linux linux-firmware vim reflector
 }
 
 unmount_filesystems() {
@@ -298,7 +320,7 @@ install_packages() {
 
     # basic tools
     packages+=' sudo xorg networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools linux-headers pacman-contrib' 
-    packages+=' bluez bluez-utils xdg-utils xdg-user-dirs git reflector cmake expac'
+    packages+=' bluez bluez-utils xdg-utils xdg-user-dirs git cmake expac'
     packages+=' mlocate sshfs neofetch'
     
     #audio
@@ -679,6 +701,16 @@ EOF
 
     chmod 440 /etc/sudoers
 }
+
+update_mirrorlist() {
+    cat > /etc/pacman.d/mirrorlist <<EOF
+# mirrorlist for Portugal from arch-install
+
+Server = https://ftp.rnl.tecnico.ulisboa.pt/pub/archlinux/$repo/os/$arch
+Server = https://glua.ua.pt/pub/archlinux/$repo/os/$arch
+EOF
+}
+
 
 set_root_password() {
     local password="$1"; shift
