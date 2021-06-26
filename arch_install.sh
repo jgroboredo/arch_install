@@ -255,6 +255,7 @@ configure() {
     dot_files "$USER_NAME"
 
     rm /setup.sh
+    rm /${DE}_packages.sh  
 }
 
 partition_drive() {
