@@ -671,7 +671,12 @@ install_yay() {
         #packages+=' pop-gtk-theme-git pop-icon-theme-git'
         packages+=' arc-x-icons-theme'
 
-        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended mimeo xdg-utils-mimeo'
+        #mime-type handler
+        #packages+=' mimeo xdg-utils-mimeo'
+        packages+=' mimi-git'
+
+        #misc
+        packages+=' vim-plug-git vim-youcompleteme-git visual-studio-code-bin zoom hunspell-pt_pt textext qtgrace dmenu-extended'
         #packages+=' fzwal-git' 
 
         # == install packages from AUR ==
@@ -686,6 +691,9 @@ dot_files() {
     DOTFILES_CLONE_DIR=/home/$ARCH_ADMIN/Documents
     su -P "$ARCH_ADMIN" -c "mkdir -p $DOTFILES_CLONE_DIR"
     ZSHAUTO_CLONE_DIR=/home/$ARCH_ADMIN/.config
+
+    #Creating .config folder for user
+    su -P "$ARCH_ADMIN" -c "mkdir -p $ZSHAUTO_CLONE_DIR"
 
     #Creating vim pluggins directory
     su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.vim/plugged"
