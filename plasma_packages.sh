@@ -21,15 +21,15 @@ install_packages() {
     # Libreoffice
     packages+=' libreoffice-fresh hyphen-en mythes-en'
     
-    # i3
-    packages+=' i3 dmenu picom guake pcmanfm xautolock flameshot'
+    # plasma
+    packages+=' plasma kde-applications dmenu picom guake pcmanfm xautolock flameshot'
 
-    # Login manager
+    #login manager
     packages+=' lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings'
 
     # xfce4
-    packages+=' xfce4-terminal xfce4-power-manager xfce4-notifyd'
-    
+    packages+=' xfce4-terminal'
+
     # Fonts
     packages+=' ttf-dejavu ttf-liberation noto-fonts otf-font-awesome'
 
