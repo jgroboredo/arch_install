@@ -58,10 +58,8 @@ DE="i3"
 
 #for plama
 #DE="plasma"
-if [ "$DE" = "i3" ]
-    then
-        source i3_packages.sh  
-fi
+
+source ${DE}_packages.sh  
 ###################################################
 
 
