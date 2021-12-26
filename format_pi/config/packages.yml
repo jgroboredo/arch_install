@@ -1,0 +1,56 @@
+boot:
+  pi:
+    - raspberrypi-bootloader
+    - raspberrypi-bootloader-x  # extra codecs
+    - raspberrypi-firmware
+    - firmware-raspberrypi  # needed for aarch64
+
+cpu:
+  amd:
+    - amd-ucode
+  intel:
+    - intel-ucode
+  aarch64:
+    #- raspberrypi-userland-aarch64
+    # FIXME: These should be in boot-aarch64
+    - uboot-tools
+    - uboot-raspberrypi
+
+pi:
+  - rng-tools  # for entropy
+  - dhcpcd
+  - btrfs-progs
+  - zsh
+  - zsh-theme-powerlevel10k zsh-syntax-highlighting
+  - fzf
+  - exa
+  - rsync
+  - docker
+  - docker-compose
+  - wireguard-tools
+  - tcpdump
+  - fail2ban
+  - git
+  - git-lfs
+  - git-crypt
+  - diff-so-fancy
+  - neovim
+  - jq
+  - yq
+  - ranger
+  - nnn
+  - ncdu
+  - openssh
+  - htop
+  - iotop
+  - bmon
+  - iptraf-ng
+  - iperf3
+  - tmux
+  - fuse2
+  - udisks2
+  - ffmpeg
+  - wget
+  - usbutils
+  - python
+

@@ -1,0 +1,4 @@
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults timestamp_timeout=0
+Defaults insults
+%wheel ALL=(ALL) ALL

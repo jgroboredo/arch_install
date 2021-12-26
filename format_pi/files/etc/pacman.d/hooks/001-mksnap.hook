@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = this-hook-is-disabled
+
+[Action]
+Description = Creating system snapshot
+When = PreTransaction
+Exec = /usr/bin/mksnap
+NeedsTargets
+AbortOnFail

@@ -1,0 +1,4 @@
+# mirrorlist for ALARM from arch-install
+
+## Geo-IP based mirror selection and load balancing
+Server = http://mirror.archlinuxarm.org/$arch/$repo

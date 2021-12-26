@@ -1,0 +1,214 @@
+# shellcheck disable=SC1090
+# shellcheck disable=SC1091
+Comment: ignore shellcheck errors
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export ROOT_DIR
+[ "$(id -u)" = "0" ] || (echo "ERROR: This command must be run as root" && exit 1)
+
+
+INSIDE_CHROOT='no'
+if systemd-detect-virt --chroot; then
+    INSIDE_CHROOT='yes'
+fi
+
+ARCH_RAM_GB=${ARCH_RAM_GB:-$(grep MemTotal /proc/meminfo | awk '{printf "%.0f", $2 / 1024 / 1024}')}
+
+
+# -- cpu brand
+
+if [ "$ARCH_CHROOTING" != 'yes' ]; then
+    CPU_VENDOR=$(grep vendor /proc/cpuinfo | uniq)
+    if echo "$CPU_VENDOR" | grep -q -i intel; then
+        ARCH_CPU_BRAND='intel'
+    elif echo "$CPU_VENDOR" | grep -q -i amd; then
+        ARCH_CPU_BRAND='amd'
+    else
+        fail "Unrecognized CPU vendor '$CPU_VENDOR'"
+    fi
+else
+    ARCH_CPU_BRAND=${ARCH_CPU_BRAND:-chroot_unknown}
+fi
+
+# -- gpu brand
+
+if [ "$ARCH_CHROOTING" != 'yes' ]; then
+    if lspci | grep -q -i "VGA.*\WIntel"; then
+        ARCH_GPU_TYPE='intel'
+        if lspci | grep -q -i "3D.*\WNVIDIA"; then
+            ARCH_GPU_TYPE='optimus'
+        fi
+    elif lspci | grep -q -i "3D.*\WNVIDIA"; then
+        ARCH_GPU_TYPE='nvidia'
+    elif lspci | grep -q -i "VGA.*\WAMD"; then
+        ARCH_GPU_TYPE='amd'
+    elif lspci | grep -q -i "VGA.*\WATI"; then
+        ARCH_GPU_TYPE='ati'
+    elif [ "$ARCH_VM" != 'none' ]; then
+        ARCH_GPU_TYPE="$ARCH_VM"
+    else
+        lspci | grep 'VGA\|3D'
+        fail 'Unrecognized GPU vendor'
+    fi
+else
+    ARCH_GPU_TYPE=${ARCH_GPU_TYPE:-chroot_unknown}
+fi
+
+# Needed dependencies to install from a live system
+requirements=(aria2c mkimage bsdtar parted btrfs genfstab arch-chroot)
+#instead of installing qemu-user-static-bin
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+#################### Installer section ######################################
+
+#1) Time
+timedatectl set-ntp true
+sleep 2
+
+if ! timedatectl status | grep -q 'System clock synchronized: yes'; then
+    fail "Failed to synchronize clock with NTP"
+elif ! timedatectl status | grep -q 'NTP service: active'; then
+    fail "Failed to synchronize clock with NTP"
+else
+    info 'Clock: Synchronized'
+fi
+
+#2) Partition disks
+
+[ ! -d "$ARCH_CHROOT" ] || die "There are leftovers in $ARCH_CHROOT from a previous run"
+[ -b "/dev/$ARCH_DISK" ] || die "Device /dev/$ARCH_DISK does not exist"
+# shellcheck disable=SC2143
+[ -z "$(mount | grep "/dev/$ARCH_DISK")" ] || die "$ARCH_DISK is mounted somewhere"
+
+# == Partition and mount disk ==
+
+fdisk -l "/dev/$ARCH_DISK"
+
+pause "Will partition /dev/$ARCH_DISK for $ARCH_BOOT_MODE"
+
+case "$ARCH_BOOT_MODE" in
+    efi)
+        parted --script "/dev/$ARCH_DISK" \
+            mklabel gpt \
+            mkpart primary fat32 1MiB 550MiB \
+            set 1 esp on \
+            mkpart primary btrfs 550MiB 100%
+    ;;
+
+    bios)
+        parted --script "/dev/$ARCH_DISK" \
+            mklabel msdos \
+            mkpart primary btrfs 1MiB 100% \
+            set 1 boot on
+    ;;
+
+    pi)
+        parted --script "/dev/$ARCH_DISK" \
+            mklabel msdos \
+            mkpart primary fat32 1M 200MiB \
+            mkpart primary btrfs 200MiB 100%
+    ;;
+
+    *)
+        die "Unknown boot mode $ARCH_BOOT_MODE"
+    ;;
+esac
+
+fdisk -l "/dev/$ARCH_DISK"
+
+pause "Partitioned /dev/$ARCH_DISK"
+
+# == Set the partition variables ==
+
+ARCH_DISK_P=$ARCH_DISK
+if [[ "$ARCH_DISK_P" == nvme* ]] || [[ "$ARCH_DISK_P" == mmcblk* ]]; then
+    ARCH_DISK_P="${ARCH_DISK_P}p"
+fi
+
+export ARCH_DISK_EFI_PART=""
+export ARCH_DISK_BOOT_PART=""
+
+if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
+    export ARCH_DISK_EFI_PART="/dev/${ARCH_DISK_P}1"
+    export ARCH_DISK_ROOT_PART="/dev/${ARCH_DISK_P}2"
+elif [ "$ARCH_BOOT_MODE" == 'bios' ]; then
+    export ARCH_DISK_ROOT_PART="/dev/${ARCH_DISK_P}1"
+elif [ "$ARCH_BOOT_MODE" == 'pi' ]; then
+    export ARCH_DISK_BOOT_PART="/dev/${ARCH_DISK_P}1"
+    export ARCH_DISK_ROOT_PART="/dev/${ARCH_DISK_P}2"
+else
+    die "Unknown boot mode $ARCH_BOOT_MODE"
+fi
+
+#!/bin/bash
+
+if [ -n "$ARCH_DISK_EFI_PART" ]; then
+    info "Formatting $ARCH_DISK_EFI_PART as FAT32"
+    mkfs.vfat -F32 -n "BOOT" "$ARCH_DISK_EFI_PART"
+fi
+
+if [ -n "$ARCH_DISK_BOOT_PART" ]; then
+    info "Formatting $ARCH_DISK_BOOT_PART as FAT32"
+    mkfs.vfat -F32 -n "BOOT" "$ARCH_DISK_BOOT_PART"
+fi
+
+# shellcheck disable=SC2153  # not a misspelling
+info "Formatting $ARCH_DISK_ROOT_PART as btrfs"
+mkfs.btrfs -f -L "Arch Linux" "$ARCH_DISK_ROOT_PART"
+
+# == Create btrfs subvolumes ==
+
+info "Creating btrfs subvolumes"
+
+mkdir -p "$ARCH_CHROOT"
+
+mount -t btrfs -o noatime "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT"
+
+btrfs subvolume create "$ARCH_CHROOT/@"
+btrfs subvolume create "$ARCH_CHROOT/@home"
+btrfs subvolume create "$ARCH_CHROOT/@storage"
+btrfs subvolume create "$ARCH_CHROOT/@swap"
+btrfs subvolume create "$ARCH_CHROOT/@var_log"
+btrfs subvolume create "$ARCH_CHROOT/@var_cache"
+
+if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
+    btrfs subvolume create "$ARCH_CHROOT/@recovery"
+fi
+
+umount -R "$ARCH_CHROOT"
+
+# == Mount everything ==
+
+info "Mounting partitions"
+
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@          "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@home      "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/home"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd                    "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/mnt/root"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@storage   "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/mnt/storage"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@swap      "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/swap"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@var_log   "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/var/log"
+mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@var_cache "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/var/cache"
+
+btrfs property set "$ARCH_CHROOT/mnt/storage" compression zstd
+chown -c "$ARCH_ADMIN_UID:$ARCH_ADMIN_UID" "$ARCH_CHROOT/mnt/storage"
+chmod -c 700 "$ARCH_CHROOT/mnt/storage"
+
+if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
+    mount -t btrfs -o noatime,x-mount.mkdir,compress=zstd,subvol=/@recovery  "$ARCH_DISK_ROOT_PART" "$ARCH_CHROOT/recovery"
+fi
+
+if [ -n "$ARCH_DISK_EFI_PART" ]; then
+    mkdir -p "$ARCH_CHROOT/efi"
+    mount "$ARCH_DISK_EFI_PART" "$ARCH_CHROOT/efi"
+fi
+
+if [ -n "$ARCH_DISK_BOOT_PART" ]; then
+    mkdir -p "$ARCH_CHROOT/boot"
+    mount "$ARCH_DISK_BOOT_PART" "$ARCH_CHROOT/boot"
+fi
+
+# Sync and reload partition table
+sync
+sleep 2
+partprobe "/dev/$ARCH_DISK"
+

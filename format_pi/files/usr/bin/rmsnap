@@ -1,0 +1,14 @@
+#!/bin/bash
+# shellcheck disable=SC2002
+# shellcheck disable=SC2086
+
+set -euo pipefail  # x for debug
+
+if [ "$(id -u)" != "0" ]; then
+    echo "Re-running as root"
+    exec sudo -E "$0" ${1+"$@"}
+fi
+
+rm -rf /boot/kernels
+btrfs subvolume delete /.snapshots/*
+rm -f /boot/loader/entries/snapshot_*

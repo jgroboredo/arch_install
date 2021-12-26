@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Check for pacnew files
+When = PostTransaction
+Exec = /usr/bin/bash -c 'find /etc -name "*.pacnew" -exec printf "\033[0;33mWARNING:\033[0m {}\n" {} \; 2>/dev/null'
