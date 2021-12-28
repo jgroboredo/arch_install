@@ -628,6 +628,8 @@ function config_users() {
         read_password "User '$usr'" "temp_pw"
         printf "${temp_pw}\n${temp_pw}\n" | passwd "$usr"
 
+        info "Password set for user $usr"
+
     done
 
     # == delete alarm ==
@@ -638,6 +640,8 @@ function config_users() {
 
         usermod -aG video "$ARCH_ADMIN"
     fi
+
+    pause 'Users created'
 }
 
 # ==========================================================================

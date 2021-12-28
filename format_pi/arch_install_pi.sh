@@ -255,7 +255,7 @@ function setup_swap() {
 
 # == Pacman & pacstrap ==
 
-function pacstrap() {
+function pacstrapping() {
     PACSTRAP_CONF=/tmp/pacstrap.conf
 
     if [ -f "$PACSTRAP_CONF" ]; then
@@ -520,6 +520,7 @@ function config_users() {
         printline '='
 
         if [ "$usr" == "$ARCH_ADMIN" ]; then
+            info "Creating user for admin"
             useradd --create-home -u "$ARCH_ADMIN_UID" "$ARCH_ADMIN"
             usermod -a -G wheel "$ARCH_ADMIN"
         else
@@ -529,11 +530,12 @@ function config_users() {
         chmod 700 "/home/$usr"
         chsh -s "/bin/zsh" "$usr"
 
-        if [ -n "${ARCH_USER_PASSWORDS[$usr]}" ]; then
-            printf "${ARCH_USER_PASSWORDS[$usr]}\n${ARCH_USER_PASSWORDS[$usr]}\n" | passwd "$usr"
-        else
-            passwd -d "$usr"
-        fi
+        temp_pw=""
+        read_password "User '$usr'" "temp_pw"
+        printf "${temp_pw}\n${temp_pw}\n" | passwd "$usr"
+
+        info "Password set for user $usr"
+
     done
 
     # == delete alarm ==
@@ -544,6 +546,8 @@ function config_users() {
 
         usermod -aG video "$ARCH_ADMIN"
     fi
+
+    pause 'Users created' 
 }
 
 # ==========================================================================
@@ -804,14 +808,13 @@ function first_setup() {
     disk_partitions
     disk_btrfs_mount
     setup_swap
-    pacstrap
+    pacstrapping
     fstab
     go_chroot
     final_cleanup
 }
 
 function inside_chroot() {
-    config_pw
     system_config
     packages
     dot_files
@@ -823,12 +826,14 @@ function inside_chroot() {
     chroot_cleanup
 }
 
-set -ex
-
-if [ "$1" == "chrooting" ]
+if [ "${1-default}" == "chrooting" ]
 then
+    echo "Inside chroot"
+    pause "Check state"
     inside_chroot
 else
+    echo "Outside chroot"
+    pause "Check state"
     first_setup
 fi
 
