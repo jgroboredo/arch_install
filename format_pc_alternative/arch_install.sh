@@ -669,7 +669,7 @@ function bootloader(){
         grub-install --target=i386-pc "/dev/$ARCH_DISK_P"
         grub-mkconfig -o /boot/grub/grub.cfg
     elif [ "$ARCH_BOOT_MODE" == 'efi' ]; then
-        if [ "$ARCH_GRUB" == 'yes']; then
+        if [ "$ARCH_GRUB" == 'yes' ]; then
             sed -i "s/ quiet/$KERNEL_OPTS/" /etc/default/grub
             grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
             grub-mkconfig -o /boot/grub/grub.cfg
