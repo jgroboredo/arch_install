@@ -323,7 +323,7 @@ extra:
   - python python-pip python-virtualenvwrapper
   - python-pipx python-numpy python-scipy python-matplotlib
   - android-tools android-udev
-  - jupyter jupyter-lab
+  - jupyter jupyterlab
   - go
   - shellcheck
   - docker docker-compose
