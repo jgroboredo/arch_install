@@ -624,11 +624,7 @@ function config_users() {
         chmod 700 "/home/$usr"
         chsh -s "/bin/zsh" "$usr"
 
-        if [ -n "${ARCH_USER_PASSWORDS[$usr]}" ]; then
-            printf "${ARCH_USER_PASSWORDS[$usr]}\n${ARCH_USER_PASSWORDS[$usr]}\n" | passwd "$usr"
-        else
-            passwd -d "$usr"
-        fi
+        passwd -d "$usr"
     done
 
     # == delete alarm ==
@@ -999,7 +995,6 @@ function first_setup() {
 }
 
 function inside_chroot() {
-    config_pw
     system_config
     packages
     dot_files
