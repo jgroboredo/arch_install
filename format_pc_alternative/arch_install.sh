@@ -1013,10 +1013,14 @@ function inside_chroot() {
 
 set -ex
 
-if [ "$1" == "chrooting" ]
+if [ "${1-default}" == "chrooting" ]
 then
+    echo "inside chroot"
+    pause "Check state"
     inside_chroot
 else
+    echo "Outside chroot"
+    pause "Check state"
     first_setup
 fi
 
