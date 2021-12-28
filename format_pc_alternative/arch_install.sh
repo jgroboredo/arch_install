@@ -51,6 +51,10 @@ else
     ARCH_BOOT_MODE='bios'
 fi
 
+# -- vm
+
+ARCH_VM="$(systemd-detect-virt || return 0)"
+
 # -- cpu brand
 
 CPU_VENDOR=$(grep vendor /proc/cpuinfo | uniq)
@@ -75,6 +79,8 @@ elif lspci | grep -q -i "VGA.*\WAMD"; then
     ARCH_GPU_TYPE='amd'
 elif lspci | grep -q -i "VGA.*\WATI"; then
     ARCH_GPU_TYPE='ati'
+elif [ "$ARCH_VM" != 'none' ]; then
+    ARCH_GPU_TYPE="$ARCH_VM"
 else
     lspci | grep 'VGA\|3D'
     fail 'Unrecognized GPU vendor'
