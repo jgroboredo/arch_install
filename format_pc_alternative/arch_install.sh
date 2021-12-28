@@ -5,6 +5,11 @@ set -euo pipefail  # x for debug
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 export ROOT_DIR
 
+INSIDE_CHROOT='no'
+if systemd-detect-virt --chroot; then
+    INSIDE_CHROOT='yes'
+fi
+
 # Source common scripts
 for s in "$ROOT_DIR/aux_scripts"/*.sh; do
     source "$s"
