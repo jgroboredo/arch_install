@@ -1,56 +1,376 @@
 boot:
-  pi:
-    - raspberrypi-bootloader
-    - raspberrypi-bootloader-x  # extra codecs
-    - raspberrypi-firmware
-    - firmware-raspberrypi  # needed for aarch64
+  bios:
+    - grub
+    - os-prober
+  efi:
+    - efibootmgr
+    - efitools
+    - sbsigntools
+    - sbctl
 
 cpu:
   amd:
     - amd-ucode
   intel:
     - intel-ucode
-  aarch64:
-    #- raspberrypi-userland-aarch64
-    # FIXME: These should be in boot-aarch64
-    - uboot-tools
-    - uboot-raspberrypi
 
-pi:
-  - rng-tools  # for entropy
-  - dhcpcd
-  - btrfs-progs
-  - zsh
-  - zsh-theme-powerlevel10k zsh-syntax-highlighting
-  - fzf
-  - exa
-  - rsync
-  - docker
-  - docker-compose
-  - wireguard-tools
-  - tcpdump
+gpu:
+  common: &gpu_common
+    - vulkan-icd-loader lib32-vulkan-icd-loader
+    - vulkan-headers
+    - vulkan-tools
+    - libva-utils
+    - clinfo ocl-icd  # opencl
+    - mesa-demos
+  intel: &intel
+    - *gpu_common
+    - mesa lib32-mesa
+    - libva-intel-driver  # for < broadwell, up to coffee lake
+    - intel-media-driver  # for > broadwell
+    - vulkan-intel lib32-vulkan-intel
+    - intel-compute-runtime # for opencl
+    - intel-gpu-tools
+  nvidia: &nvidia
+    - *gpu_common
+    - nvidia-dkms nvidia-settings
+    - nvidia-utils lib32-nvidia-utils
+    - libglvnd lib32-libglvnd
+    - libvdpau lib32-libvdpau
+    - opencl-nvidia
+    - egl-wayland
+  optimus:
+    - *gpu_common
+    - *intel
+    - *nvidia
+  radeon: &radeon
+    - mesa lib32-mesa
+    - vulkan-radeon lib32-vulkan-radeon
+    - libva-mesa-driver lib32-libva-mesa-driver
+    - mesa-vdpau lib32-mesa-vdpau
+    - opencl-mesa
+    - radeontop
+  ati:
+    - *gpu_common
+    - *radeon
+    - xf86-video-ati
+  amd:
+    - *gpu_common
+    - *radeon
+    - xf86-video-amdgpu
+
+xorg:
+  core:
+    - xorg
+    - xorg-server
+    - xorg-xrandr
+    - xf86-input-evdev
+    - sx
+    - arandr
+    - autorandr
+    - xorg-xinit
+  extra:
+    - xorg-xkbcomp
+    - xorg-xinput
+    - xclip
+    - xdotool
+    - xorg-xbacklight
+    - xorg-xprop
+    - xorg-xdpyinfo
+    - xorg-xkill
+    - wmctrl
+
+sway:
+  - sway
+  - swaylock
+  - swaybg
+  - swayidle
+  - waybar
+  - xdg-desktop-portal-wlr
+  - grim  # screenshots
+  - slurp # screenshots
+  - kanshi # dynamic display manager
+
+plasma:
+  core:
+    - plasma-desktop
+    - plasma-wayland-session
+    - plasma-workspace-wallpapers
+    - plasma-systemmonitor
+    - kinfocenter
+    - kscreen
+    - kde-gtk-config
+    - kwrited
+    - plasma-nm
+    - plasma-pa
+    - plasma-browser-integration
+    - powerdevil
+    - bluedevil
+    - kdeconnect
+    - audiocd-kio
+    - khotkeys
+    - drkonqi  # crash handler
+    - breeze breeze-gtk
+    - kwalletmanager
+    - kdialog  # for native dialogs in some apps
+    # Default Utils
+    - kate
+    #- print-manager
+    - skanlite
+    - kolourpaint
+    - kgpg
+    - kamoso
+    - konsole yakuake
+    - dolphin ffmpegthumbs libraw
+    - ark
+    - okular
+    - k3b
+    - cdrdao        # disk-at-once (DAO) mode
+    - cdrtools      # CD burning with cdrecord
+    - dvd+rw-tools  # DVD burning
+    - emovix        # bootable multimedia CD/DVD
+    - cdparanoia    # CD ripping
+    - transcode     # DVD ripping
+    # Other
+    - xdg-desktop-portal xdg-desktop-portal-kde xdg-desktop-portal-gtk
+    - phonon-qt5-gstreamer
+    - sddm sddm-kcm
+  extra:
+    - kvantum-qt5
+    - kcolorchooser
+    - kruler
+    - okteta
+    - kompare
+    - krename
+    - akregator
+    - partitionmanager
+
+pulseaudio:
+  - pulseaudio
+  - pulseaudio-alsa
+  - pulseaudio-bluetooth
+  - paprefs
+  - lib32-libpulse
+  - lib32-alsa-plugins
+
+pipewire:
+  core:
+    - pipewire
+    - pipewire-alsa pipewire-pulse pipewire-jack
+    - realtime-privileges
+    - gst-plugin-pipewire
+    - wireplumber
+  extra:
+    - helvum  # patchbay
+
+
+bluetooth:
+  - bluez bluez-utils
+
+i3:
+  - i3 dmenu picom guake 
+  - xautolock
+  - xfce4-power-manager xfce4-notifyd
+  - nitrogen
+
+
+printers:
+  # printers & pdfs
+  - cups cups-pdf cups-pk-helper system-config-printer
+  #- nss-mdns  # for printer avahi discovery
+  - gscan2pdf
+  - tesseract-data-eng tesseract-data-por  # for OCR
+  - pdftk  # for PDF encryption
+
+core:
+  - apparmor
+  - reflector
+  - flatpak
+  - wl-clipboard
+  - xdg-utils
+  - xdg-user-dirs
+  - xfce4-terminal
+  - fuse2
+
+  # Automount
+  - gvfs gvfs-afc gvfs-goa gvfs-google gvfs-gphoto2 
+  - gvfs-mtp gvfs-nfs gvfs-smb
+
+  # network
+  - networkmanager
+  - network-manager-applet
+  - wpa_supplicant
+  - dnscrypt-proxy
+  - firewalld
   - fail2ban
-  - git
-  - git-lfs
-  - git-crypt
-  - diff-so-fancy
-  - neovim
-  - jq
-  - yq
-  - ranger
-  - nnn
+  - wget curl aria2
+  - wireguard-tools
+
+  # fonts
+  - ttf-dejavu ttf-liberation ttf-font-awesome
+  - ttf-droid ttf-roboto
+  - ttf-bitstream-vera
+  - noto-fonts noto-fonts-emoji
+  - adobe-source-code-pro-fonts
+  - powerline-fonts
+
+  # shell
+  - zsh zsh-theme-powerlevel10k zsh-syntax-highlighting
+  - zsh-completions
+
+  # themes & icon packs
+  - papirus-icon-theme
+  - materia-gtk-theme 
+  - lxappearance
+  - archlinux-wallpaper
+  - arc-gtk-theme
+
+  # archivers
+  - zip unzip unrar p7zip tar xz gzip cpio
+  - atool libarchive lzip
+
+  # filesystems
+  - e2fsprogs
+  - btrfs-progs compsize
+  - exfat-utils
+  - squashfs-tools squashfuse
+  - mtools
+  - dosfstools
+  - mlocate
+  - pcmanfm
+
+  # git
+  - git git-lfs git-crypt diff-so-fancy
+  - repo
+  - lazygit
+
+  # cli tools
+  - tmux screen
+  - ripgrep
   - ncdu
-  - openssh
+  - rmlint
+  - jre-openjdk jdk-openjdk jre-openjdk-headless
+  - mediainfo mediainfo-gui
+  - yt-dlp  # youtube-dl
+  - vapoursynth vapoursynth-plugin-mvtools
+  - openssh sshpass sshfs
+  - vim
+  - rclone
+  - rsync
+  - imagemagick
+  - rhash
+  - perl-rename perl-image-exiftool
+  - trash-cli
+  - man-db tldr
   - htop
+  - powertop
   - iotop
   - bmon
+  - nmon
+  - rng-tools  # for entropy
+  - firejail
+  - lsof
+  - usbutils  # lsusb
+  - i2c-tools # for openrgb
+
+  # gui tools
+  - firefox 
+  - mpv
+  - viewnior
+  - audacious
+  - libreoffice-fresh libreoffice-fresh-pt
+  - hyphen-en mythes-en
+  - hunspell hunspell-en_US
+
+  # other
+  - libcdio
+  - libappindicator-gtk3
+  - ccache  # faster aur builds
+  - earlyoom
+  - systembus-notify  # for earlyoom notifications
+
+extra:
+  # network
+  - bind       # for dig/nslookup
+  - net-tools  # for ifconfig/arp
+  - inetutils  # for telnet
+  - gnu-netcat
+  - netctl
+  - ethtool
+  - openvpn networkmanager-openvpn
   - iptraf-ng
+  - traceroute
+  - nmap
+  - arp-scan
+  - socat
   - iperf3
-  - tmux
-  - fuse2
-  - udisks2
-  - ffmpeg
-  - wget
-  - usbutils
-  - python
+  - tcpdump
+  - speedtest-cli
+  - wol
+  - tlp
+  - ntp
+  - xarchiver
+  - p7zip
+  - tumbler poppler-glib ffmpegthumbnailer freetype2 raw-thumbnailer libgsf libgepub
+
+  # sound
+  - easyeffects
+  - playerctl
+  - pavucontrol
+  - jack calf
+  - alsa-utils
+
+  # development
+  - python python-pip python-virtualenvwrapper
+  - python-pipx python-numpy python-scipy python-matplotlib
+  - android-tools android-udev
+  - jupyter jupyter-lab
+  - go
+  - shellcheck
+  - docker docker-compose
+  - cmake
+  - pdf2svg
+
+  # cli tools
+  - wine-staging winetricks
+  - virt-manager libvirt dnsmasq iptables-nft bridge-utils dmidecode edk2-ovmf
+  - pkgfile pkgstats pacman-contrib expac devtools asp
+  - wimlib chntpw icoutils
+  - mkvtoolnix-cli mkvtoolnix-gui
+  - ddrescue
+  - conky
+  - ansible
+  - hddtemp hdparm smartmontools gsmartcontrol testdisk
+  - fwupd
+  - sysstat acpi
+  - stress
+  - fzf fd
+  - moreutils
+  - cpupower
+  - strace
+  - inotify-tools
+  - grc  # colored logs (journalctl)
+  - dialog
+  - expect
+  - ranger nnn
+  - msmtp msmtp-mta  # for sendmail
+
+  # gui tools
+  - wireshark-qt
+  - dbeaver
+  - hardinfo
+  - kdiskmark
+  - blender
+  - inkscape
+  - qbittorrent
+  - zathura zathura-pdf-poppler
+  - cantor
+  - copyq
+  - gimp
+  - krita
+  - flameshot
+  - chromium
+  
+  # latex
+  - texlive-most lyx texmaker texlive-langgreek
+  - evince nuspell hspell libvoikko 
 

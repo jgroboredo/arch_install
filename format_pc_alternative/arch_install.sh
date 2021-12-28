@@ -16,8 +16,8 @@ done
 
 #Default values for needed variables
 
-CORE_DESKTOP_PKGS='core pipewire.core bluetooth printers'
-EXTRA_DESKTOP_PKGS='pipewire.extra extra plasma.core plasma.extra'
+CORE_DESKTOP_PKGS='core pipewire.core bluetooth printers xorg.core i3'
+EXTRA_DESKTOP_PKGS='pipewire.extra extra xorg.extra'
 
 ARCH_ADMIN_UID=1995
 ARCH_DISK=sda
@@ -27,6 +27,8 @@ ARCH_KEYBOARD='pt-latin9'
 ARCH_RAM_GB=4
 ARCH_USERS=goncalo
 ARCH_PRESET='no'
+ARCH_INSTALL_DOTFILES='no'
+ARCH_INSTALL_AUR='no'
 ARCH_UNATTENDED='no'
 ARCH_PACKAGES="$CORE_DESKTOP_PKGS $EXTRA_DESKTOP_PKGS"
 
@@ -82,10 +84,11 @@ if [ "$ARCH_PRESET" != 'yes' ]; then
     else
         ARCH_ADMIN="$ARCH_USERS"
     fi
-    read -r -e -p "Language: "             -i "$ARCH_LANG"          ARCH_LANG
-    read -r -e -p "Swap (GB): "            -i "$ARCH_SWAP"          ARCH_SWAP
-    read -r -e -p "Kernel: "               -i "$ARCH_KERNEL"        ARCH_KERNEL
-    read -r -e -p "Keyboard: "             -i "$ARCH_KEYBOARD"      ARCH_KEYBOARD
+    read -r -e -p "Language: "     -i "$ARCH_LANG"          ARCH_LANG
+    read -r -e -p "Swap (GB): "    -i "$ARCH_SWAP"          ARCH_SWAP
+    read -r -e -p "Kernel: "       -i "$ARCH_KERNEL"        ARCH_KERNEL
+    read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"      ARCH_KEYBOARD
+    read -r -e -p "Dot Files: "    -i "$ARCH_INSTALL_DOTFILES"      ARCH_INSTALL_DOTFILES
 fi
 
 printline "="
@@ -482,7 +485,6 @@ function packages() {
         boot.$ARCH_BOOT_MODE \
         gpu.$ARCH_GPU_TYPE \
         cpu.$ARCH_CPU_BRAND \
-        hosts.\"$ARCH_HOSTNAME\" \
         $(echo $ARCH_PACKAGES); \
     do
         if [[ $pkg_cat == aur* ]] && [[ $pkg_cat != aur.helper.* ]]; then
@@ -771,6 +773,35 @@ function enable_services() {
         systemctl --quiet enable earlyoom
     fi
 
+    # NetworkManager
+    if [ "$(command -v NetworkManager)" ]; then
+        info "Enabling NetworkManager"
+
+        systemctl --quiet enable NetworkManager
+    fi
+
+    # tlp
+    if [ "$(command -v tlp)" ]; then
+        info "Enabling tlp"
+
+        systemctl --quiet enable tlp.service
+    fi
+
+    # cpupower
+    if [ "$(command -v cpupower)" ]; then
+        info "Enabling cpupower"
+
+        systemctl --quiet enable cpupower.service 
+    fi
+
+    # ntpd
+    if [ "$(command -v ntpd)" ]; then
+        info "Enabling ntpd"
+
+        systemctl --quiet enable ntpd.service 
+    fi
+
+
     # systemd-swap
     if [ "$(command -v systemd-swap)" ]; then
         info "Enabling systemd-swap"
@@ -807,6 +838,86 @@ function enable_services() {
     info "Enabling sshd"
 
     systemctl --quiet enable sshd
+}
+
+# ==========================================================================
+
+function install_dotfiles() {
+    DOTFILES_CLONE_DIR=/home/$ARCH_ADMIN/Documents
+    su -P "$ARCH_ADMIN" -c "mkdir -p $DOTFILES_CLONE_DIR"
+    ZSHAUTO_CLONE_DIR=/home/$ARCH_ADMIN/.config
+
+    #Creating .config folder for user
+    su -P "$ARCH_ADMIN" -c "mkdir -p $ZSHAUTO_CLONE_DIR"
+
+    #Creating vim pluggins directory
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.vim/plugged"
+    
+    #Creating cache directory for zsh
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.cache/zsh"
+    su -P "$ARCH_ADMIN" -c "cd /home/$ARCH_ADMIN/.cache/zsh; touch dirs"
+
+    #Creating lyx config folder
+    su -P "$ARCH_ADMIN" -c "mkdir -p /home/$ARCH_ADMIN/.lyx"
+        
+    #Cloning needed repositories
+    su -P "$ARCH_ADMIN" -c "cd $ZSHAUTO_CLONE_DIR; git clone https://github.com/zsh-users/zsh-autosuggestions.git"
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR; git clone https://github.com/jgroboredo/lap_dotfiles.git"
+
+    #Installing dotfiles
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles; sudo chmod +x install_bin.sh; sudo ./install_bin.sh"
+
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles; sudo chmod +x install_dotfiles.sh; ./install_dotfiles.sh"
+
+    #su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/grub_theme; sudo chmod +x install.sh; sudo ./install.sh"
+    
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/xorg; sudo chmod +x install_xorg_confs.sh; sudo ./install_xorg_confs.sh"
+
+    su -P "$ARCH_ADMIN" -c "cd $DOTFILES_CLONE_DIR/lap_dotfiles/lyx; sudo chmod +x install_lyx_conf.sh; ./install_lyx_conf.sh"
+    
+    #Applying wal theme
+    #su -P "$ARCH_ADMIN" -c "wal --theme base16-nord"
+
+    #Installing vim pluggins
+    su -P "$ARCH_ADMIN" -c "vim +'PlugInstall --sync' +qa"
+}
+
+install_yay() {
+    local packages=''
+
+    if [ "$ARCH_AUR_HELPER" == 'none' ]; then
+        echo '-'
+        echo "Skipping AUR helper"
+        echo '-'
+    else
+        echo '-'
+        echo "Installing AUR helper '$ARCH_AUR_HELPER'"
+        echo '-'
+
+        AUR_HELPER_CLONE_DIR=/home/$ARCH_ADMIN/.cache/arch-install/aur_helper
+        su -P "$ARCH_ADMIN" -c "mkdir -p $AUR_HELPER_CLONE_DIR"
+        su -P "$ARCH_ADMIN" -c "cd $AUR_HELPER_CLONE_DIR; git clone https://aur.archlinux.org/$ARCH_AUR_HELPER.git"
+        su -P "$ARCH_ADMIN" -c "cd $AUR_HELPER_CLONE_DIR/$ARCH_AUR_HELPER; makepkg -s"
+        pacman --noconfirm -U "$AUR_HELPER_CLONE_DIR/$ARCH_AUR_HELPER/$ARCH_AUR_HELPER"*.pkg.tar*
+
+        #packages+=' acpi clipit ttf-font-awesome hamsket-bin polkit-gnome pa-applet-git'
+
+        #themes
+        #packages+=' pop-gtk-theme-git pop-icon-theme-git'
+        packages+=' arc-x-icons-theme'
+
+        #mime-type handler
+        #packages+=' mimeo xdg-utils-mimeo'
+        packages+=' mimi-git'
+
+        #misc
+        #packages+=' vim-plug-git vim-youcompleteme-git zoom hunspell-pt_pt textext qtgrace dmenu-extended'
+        #packages+=' fzwal-git'
+
+        # == install packages from AUR ==
+        su -P "$ARCH_ADMIN" -c "$ARCH_AUR_HELPER -S $packages"
+    fi
+
 }
 
 # ==========================================================================
@@ -858,7 +969,6 @@ function final_cleanup() {
 
 function first_setup() {
     check_config
-    check_dependencies
     print_config
     sync_clock
     disk_partitions
@@ -880,6 +990,12 @@ function inside_chroot() {
     bootloader
     network
     login
+    if [ "$ARCH_INSTALL_DOTFILES" == 'yes' ]; then
+        install_dotfiles
+    fi
+    if [ "$ARCH_INSTALL_AUR" == 'yes' ]; then
+        install_yay
+    fi
     enable_services
     chroot_cleanup
 }
