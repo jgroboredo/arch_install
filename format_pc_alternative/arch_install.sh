@@ -100,6 +100,7 @@ if [ "$ARCH_PRESET" != 'yes' ]; then
     read -r -e -p "Kernel: "       -i "$ARCH_KERNEL"        ARCH_KERNEL
     read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"      ARCH_KEYBOARD
     read -r -e -p "Dot Files: "    -i "$ARCH_INSTALL_DOTFILES"      ARCH_INSTALL_DOTFILES
+    read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"      ARCH_INSTALL_AUR
 fi
 
 printline "="
@@ -142,8 +143,11 @@ function print_config() {
     printf "${CYAN}Users:${NOCOLOR}      $ARCH_USERS\n"
     printf "${CYAN}Admin:${NOCOLOR}      $ARCH_ADMIN (uid=$ARCH_ADMIN_UID)\n"
     printf "${CYAN}Kernel:${NOCOLOR}     $ARCH_KERNEL\n"
+    printf "${CYAN}Packges:${NOCOLOR}    $ARCH_PACKAGES\n"
     printf "${CYAN}Language:${NOCOLOR}   $ARCH_LANG\n"
     printf "${CYAN}Unattended:${NOCOLOR} $ARCH_UNATTENDED\n"
+    printf "${CYAN}Dot Files:${NOCOLOR}  $ARCH_INSTALL_DOTFILES\n"
+    printf "${CYAN}AUR:${NOCOLOR}        $ARCH_INSTALL_AUR\n"
     printline "="
 
     pause 'Check configuration'
@@ -1010,8 +1014,6 @@ function inside_chroot() {
     enable_services
     chroot_cleanup
 }
-
-set -ex
 
 if [ "${1-default}" == "chrooting" ]
 then
