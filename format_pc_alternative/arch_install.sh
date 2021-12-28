@@ -117,6 +117,8 @@ function config_pw() {
         read_password "User '$usr'" "ARCH_USER_PASSWORDS[$usr]"
     done
 
+    export ARCH_USER_PASSWORDS
+
     printline "-"
 }
 
@@ -612,6 +614,7 @@ function config_users() {
         printline '='
 
         if [ "$usr" == "$ARCH_ADMIN" ]; then
+            info "Creating home for admin"
             useradd --create-home -u "$ARCH_ADMIN_UID" "$ARCH_ADMIN"
             usermod -a -G wheel "$ARCH_ADMIN"
         else
