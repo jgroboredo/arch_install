@@ -1,0 +1,50 @@
+#!/bin/bash
+# shellcheck disable=SC2002
+# shellcheck disable=SC2086
+# shellcheck disable=SC2001
+
+set -euo pipefail  # x for debug
+
+if [ "$(id -u)" != "0" ]; then
+    echo "Re-running as root"
+    exec sudo -E "$0" ${1+"$@"}
+fi
+
+KERNELS_DIR="/boot/kernels"
+BAK_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
+
+btrfs subvolume snapshot "/" "/.snapshots/$BAK_DATE"
+
+echo "Creating snapshot $BAK_DATE"
+
+for kernel in /boot/vmlinuz-*; do
+    KERNEL_NAME=$(echo "$kernel" | sed 's#/boot/vmlinuz-##')
+    KERNEL_VER=$(\
+        file "$kernel" \
+            | grep -Po 'version ([^ ]+)' \
+            | sed 's/version //' \
+    )
+    KERNEL_BAK="$KERNELS_DIR/$KERNEL_VER"
+
+    if [ ! -d "$KERNEL_BAK" ]; then
+        echo "Backing up $KERNEL_NAME $KERNEL_VER"
+
+        mkdir -p "$KERNEL_BAK"
+
+        cp "/boot/vmlinuz-$KERNEL_NAME" "$KERNEL_BAK/vmlinuz-$KERNEL_NAME"
+        cp "/boot/initramfs-$KERNEL_NAME.img" "$KERNEL_BAK/initramfs-$KERNEL_NAME.img"
+
+        md5sum $KERNEL_BAK/* > $KERNEL_BAK/hashes
+    fi
+
+    cat /boot/loader/entries/arch-$KERNEL_NAME.conf \
+        | sed "s#Arch Linux#Snapshot ($BAK_DATE) - Arch Linux#" \
+        | sed "s#vmlinuz-$KERNEL_NAME#kernels/$KERNEL_VER/vmlinuz-$KERNEL_NAME#" \
+        | sed "s#initramfs-$KERNEL_NAME.img#kernels/$KERNEL_VER/initramfs-$KERNEL_NAME.img#" \
+        | sed "s#subvol=/@#subvol=/@snapshots/$BAK_DATE#" \
+        > "/boot/loader/entries/snapshot_${KERNEL_NAME}_${BAK_DATE}.conf"
+
+    cat /etc/fstab \
+        | sed "s#subvol=/@,subvol=@#subvol=/@snapshots/$BAK_DATE#" \
+        > "/.snapshots/$BAK_DATE/etc/fstab"
+done

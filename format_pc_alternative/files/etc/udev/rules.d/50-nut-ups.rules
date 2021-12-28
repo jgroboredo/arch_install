@@ -1,0 +1,3 @@
+# https://wiki.archlinux.org/title/Network_UPS_Tools#Can't_claim_USB_device_error
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="0665", ATTR{idProduct}=="5161", SYMLINK+="ups0", GROUP="nut"
