@@ -26,6 +26,7 @@ EXTRA_DESKTOP_PKGS='pipewire.extra extra xorg.extra'
 
 ARCH_ADMIN_UID=1995
 ARCH_DISK=sda
+ARCH_GRUB='yes'
 ARCH_HOSTNAME=goncalo
 ARCH_LANG=en
 ARCH_KEYBOARD='pt-latin9'
@@ -98,6 +99,7 @@ if [ "$ARCH_PRESET" != 'yes' ]; then
     read -r -e -p "Language: "     -i "$ARCH_LANG"          ARCH_LANG
     read -r -e -p "Swap (GB): "    -i "$ARCH_SWAP"          ARCH_SWAP
     read -r -e -p "Kernel: "       -i "$ARCH_KERNEL"        ARCH_KERNEL
+    read -r -e -p "Grub for efi: " -i "$ARCH_GRUB"          ARCH_GRUB
     read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"      ARCH_KEYBOARD
     read -r -e -p "Dot Files: "    -i "$ARCH_INSTALL_DOTFILES"      ARCH_INSTALL_DOTFILES
     read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"      ARCH_INSTALL_AUR
@@ -136,6 +138,7 @@ function print_config() {
 
     printf "${CYAN}Host:${NOCOLOR} $ARCH_HOSTNAME\n"
     printf "${CYAN}Boot:${NOCOLOR} $ARCH_BOOT_MODE\n"
+    printf "${CYAN}Grub:${NOCOLOR} $ARCH_GRUB\n"
     printf "${CYAN}CPU:${NOCOLOR}  $ARCH_CPU_BRAND\n"
     printf "${CYAN}GPU:${NOCOLOR}  $ARCH_GPU_TYPE\n"
     printline "-"
@@ -666,19 +669,24 @@ function bootloader(){
         grub-install --target=i386-pc "/dev/$ARCH_DISK_P"
         grub-mkconfig -o /boot/grub/grub.cfg
     elif [ "$ARCH_BOOT_MODE" == 'efi' ]; then
-        ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
-        echo "${ROOT_OPTS} rootflags=subvol=/@ rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
+        if [ "$ARCH_GRUB" == 'yes']; then
+            grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
+            grub-mkconfig -o /efi/grub/grub.cfg
+        else
+            ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
+            echo "${ROOT_OPTS} rootflags=subvol=/@ rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
 
-        mkdir -p /efi/EFI/systemd
-        cp /usr/lib/systemd/boot/efi/systemd-bootx64.efi /efi/EFI/systemd/systemd-bootx64.efi
+            mkdir -p /efi/EFI/systemd
+            cp /usr/lib/systemd/boot/efi/systemd-bootx64.efi /efi/EFI/systemd/systemd-bootx64.efi
 
-        # Boot entry
-        efibootmgr --create \
-            --disk "/dev/$ARCH_DISK" \
-            --part "1" \
-            --label "systemd-boot" \
-            --loader "EFI\\systemd\\systemd-bootx64.efi" \
-            --verbose
+            # Boot entry
+            efibootmgr --create \
+                --disk "/dev/$ARCH_DISK" \
+                --part "1" \
+                --label "systemd-boot" \
+                --loader "EFI\\systemd\\systemd-bootx64.efi" \
+                --verbose
+        fi
     fi
 }
 
