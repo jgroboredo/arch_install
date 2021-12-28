@@ -624,7 +624,10 @@ function config_users() {
         chmod 700 "/home/$usr"
         chsh -s "/bin/zsh" "$usr"
 
-        passwd -d "$usr"
+        temp_pw=""
+        read_password "User '$usr'" "temp_pw"
+        printf "${temp_pw}\n${temp_pw}\n" | passwd "$usr"
+
     done
 
     # == delete alarm ==
