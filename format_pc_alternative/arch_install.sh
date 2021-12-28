@@ -339,7 +339,7 @@ function setup_swap() {
 
 # == Pacman & pacstrap ==
 
-function pacstrap() {
+function pacstrapping() {
     PACSTRAP_CONF=/tmp/pacstrap.conf
 
     if [ -f "$PACSTRAP_CONF" ]; then
@@ -989,7 +989,7 @@ function first_setup() {
     disk_partitions
     disk_btrfs_mount
     setup_swap
-    pacstrap
+    pacstrapping
     fstab
     go_chroot
     final_cleanup
