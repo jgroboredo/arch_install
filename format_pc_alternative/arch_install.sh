@@ -670,8 +670,9 @@ function bootloader(){
         grub-mkconfig -o /boot/grub/grub.cfg
     elif [ "$ARCH_BOOT_MODE" == 'efi' ]; then
         if [ "$ARCH_GRUB" == 'yes']; then
+            sed -i "s/ quiet/$KERNEL_OPTS/" /etc/default/grub
             grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
-            grub-mkconfig -o /efi/grub/grub.cfg
+            grub-mkconfig -o /boot/grub/grub.cfg
         else
             ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
             echo "${ROOT_OPTS} rootflags=subvol=/@ rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
