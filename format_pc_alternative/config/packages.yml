@@ -3,6 +3,8 @@ boot:
     - grub
     - os-prober
   efi:
+    - grub
+    - os-prober
     - efibootmgr
     - efitools
     - sbsigntools
