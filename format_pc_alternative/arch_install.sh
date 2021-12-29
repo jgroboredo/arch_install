@@ -535,6 +535,7 @@ function dot_files() {
     rm -rf /etc/skel/.bash*
     rm -f  /etc/skel/.keep
 
+    chmod -R 755 "$ROOT_DIR/files/" 
     # deploy dotfiles
     RSYNC_CMD="rsync --inplace --recursive --copy-links --perms --times"
     RSYNC_CMD="$RSYNC_CMD --exclude .keep"
@@ -569,7 +570,7 @@ function dot_files() {
 # == kernel ==
 
 function kernel_preset() {
-    if [ "$(command -v mkinitcpio)" ] && [ "$ARCH_BOOT_MODE" != 'pi' ]; then
+    if [ "$(command -v mkinitcpio)" ] && [ "$ARCH_BOOT_MODE" != 'pi' ] && [ "$ARCH_GRUB" != 'yes' ]; then
         if [ ! -f "/etc/mkinitcpio.d/$ARCH_KERNEL.preset" ]; then
             fail "Kernel $ARCH_KERNEL is not installed"
         fi
@@ -659,6 +660,7 @@ function bootloader(){
     fi
 
     # == Boot ==
+    pause "Installing bootloader"
 
     KERNEL_OPTS='usb-storage.quirks=174c:5136:u,152d:0578:u,152d:0583:u audit=0 ipv6.disable=1'
 
@@ -673,6 +675,9 @@ function bootloader(){
             sed -i "s/ quiet/$KERNEL_OPTS/" /etc/default/grub
             grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
             grub-mkconfig -o /boot/grub/grub.cfg
+            if [ -f "/etc/pacman.d/hooks/100-efi-systemd-boot.hook" ]; then
+                rm -f "/etc/pacman.d/hooks/100-efi-systemd-boot.hook"
+            fi
         else
             ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
             echo "${ROOT_OPTS} rootflags=subvol=/@ rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
@@ -689,6 +694,9 @@ function bootloader(){
                 --verbose
         fi
     fi
+    
+    info "Bootloader installed"
+    pause "Check bootloader installation"
 }
 
 # ==========================================================================
