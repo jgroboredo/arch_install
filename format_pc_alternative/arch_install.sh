@@ -50,6 +50,7 @@ if [ -d '/sys/firmware/efi' ]; then
     ARCH_BOOT_MODE='efi'
 else
     ARCH_BOOT_MODE='bios'
+    ARCH_GRUB='no'
 fi
 
 # -- vm
