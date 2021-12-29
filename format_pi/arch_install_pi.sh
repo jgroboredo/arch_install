@@ -464,6 +464,7 @@ function dot_files() {
     rm -rf /etc/skel/.bash*
     rm -f  /etc/skel/.keep
 
+    chmod -R 755 "$ROOT_DIR/files/"
     # deploy dotfiles
     RSYNC_CMD="rsync --inplace --recursive --copy-links --perms --times"
     RSYNC_CMD="$RSYNC_CMD --exclude .keep"
