@@ -693,6 +693,9 @@ function bootloader(){
                 --label "systemd-boot" \
                 --loader "EFI\\systemd\\systemd-bootx64.efi" \
                 --verbose
+
+            mkdir -p /efi/EFI/Linux
+            mkinitcpio -p "$ARCH_KERNEL"
         fi
     fi
     
