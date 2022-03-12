@@ -484,6 +484,10 @@ function dot_files() {
     # The mirrorlist was already setup by pacstrap
     rm -f /etc/pacman.d/mirrorlist-*
 
+    if [ "$ARCH_BOOT_MODE" != 'efi' ]; then
+        rm -f /etc/pacman.d/hooks/*-efi-*.hook
+    fi
+
     echo 'NO_AT_BRIDGE=1' >> /etc/environment
 }
 
