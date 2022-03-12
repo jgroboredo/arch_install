@@ -557,6 +557,7 @@ function config_users() {
 function bootloader(){
     # == Boot ==
 
+    #usb line fixes no boot from poor ssh cage
     KERNEL_OPTS='usb-storage.quirks=174c:5136:u,152d:0578:u,152d:0583:u audit=0 ipv6.disable=1'
 
 

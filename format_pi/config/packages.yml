@@ -10,11 +10,11 @@ cpu:
     - amd-ucode
   intel:
     - intel-ucode
-  aarch64:
-    #- raspberrypi-userland-aarch64
-    # FIXME: These should be in boot-aarch64
-    - uboot-tools
-    - uboot-raspberrypi
+#aarch64:
+#- raspberrypi-userland-aarch64
+# FIXME: These should be in boot-aarch64
+#- uboot-tools
+#- uboot-raspberrypi
 
 pi:
   - rng-tools  # for entropy
