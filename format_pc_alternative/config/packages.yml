@@ -201,7 +201,7 @@ core:
   - networkmanager
   - network-manager-applet
   - wpa_supplicant
-  - dnscrypt-proxy
+  #- dnscrypt-proxy #replaced with systemd-resolved
   - firewalld
   - fail2ban
   - wget curl aria2
