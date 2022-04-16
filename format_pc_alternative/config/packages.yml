@@ -318,14 +318,14 @@ extra:
   - easyeffects
   - playerctl
   - pavucontrol
-  - jack calf
+  - calf
   - alsa-utils
 
   # development
   - python python-pip python-virtualenvwrapper
   - python-pipx python-numpy python-scipy python-matplotlib
   - android-tools android-udev
-  - jupyter jupyterlab
+  - jupyterlab
   - go
   - shellcheck
   - docker docker-compose
@@ -373,6 +373,6 @@ extra:
   - chromium
   
   # latex
-  - texlive-most lyx texmaker texlive-langgreek
+  - texlive-most texmaker texlive-langgreek
   - evince nuspell hspell libvoikko 
 
