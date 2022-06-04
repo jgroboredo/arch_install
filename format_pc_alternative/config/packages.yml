@@ -93,6 +93,7 @@ sway:
   - kanshi # dynamic display manager
   - brightnessctl  
   - light
+  - mako
 
 plasma:
   core:
