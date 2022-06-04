@@ -91,6 +91,7 @@ sway:
   - grim  # screenshots
   - slurp # screenshots
   - kanshi # dynamic display manager
+  - brightnessctl  
 
 plasma:
   core:
