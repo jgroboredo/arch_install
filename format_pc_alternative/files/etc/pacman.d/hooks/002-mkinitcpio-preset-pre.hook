@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = mkinitcpio
+
+[Action]
+Description = Backing up mkinitcpio hook preset...
+When = PreTransaction
+Exec = /bin/sh -c "cp /usr/share/mkinitcpio/hook.preset /usr/share/mkinitcpio/hook.preset.bak"
+

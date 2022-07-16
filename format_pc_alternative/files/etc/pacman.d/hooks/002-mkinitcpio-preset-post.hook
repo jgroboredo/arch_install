@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = mkinitcpio
+
+[Action]
+Description = Restoring mkinitcpio hook preset...
+When = PostTransaction
+Exec = /bin/sh -c "cp /usr/share/mkinitcpio/hook.preset.bak /usr/share/mkinitcpio/hook.preset"
+
