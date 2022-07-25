@@ -238,6 +238,8 @@ function disk_partitions() {
     fi
     
     export ARCH_DISK_EFI_PART=""
+
+    # BOOT_PART is never used (only in RPI formatting)
     export ARCH_DISK_BOOT_PART=""
     
     if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
@@ -978,6 +980,112 @@ install_yay() {
 }
 
 # ==========================================================================
+# == Recovery System ==
+
+#TODO:: Need to copy entire auxiliary scripts since I'm using them
+
+function setup_recovery_before_chroot() {
+    
+    printline '='
+    pause 'All done in the main system. Preparing recovery system now...'
+    printline '='
+
+    # == Pacstrap ==
+    
+    pause "Before pacstrap to recovery"
+    
+    pacstrap "/recovery" \
+    base base-devel \
+    zsh sudo \
+    mkinitcpio btrfs-progs \
+    "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware crda vim
+
+    pause "Pacstrap to recovery finished"
+
+    printline '='
+
+    info 'Setting up rest of the recovery'
+
+    info 'Setting up fstab'
+    
+    genfstab -U "/recovery" >> "/recovery/etc/fstab"
+    sed -i -r 's/,subvolid=[0-9]+//g' "/recovery/etc/fstab"
+    
+    if [ "$(cat /sys/block/$ARCH_DISK/queue/rotational)" -eq 0 ] || [ "$ARCH_BOOT_MODE" == 'pi' ]; then
+        sed -i -r 's/space_cache/ssd,space_cache/g' "/recovery/etc/fstab"
+    fi
+    
+    printline '-'
+    
+    cat "/recovery/etc/fstab"
+    
+    pause "Check the fstab"
+
+    printline '='
+
+    # == Copying mkinitcpio preset if systemd boot ==
+
+    if [ "$(command -v mkinitcpio)" ] && [ "$ARCH_BOOT_MODE" != 'pi' ] && [ "$ARCH_GRUB" != 'yes' ]; then
+        cp "/etc/mkinitcpio.d/$ARCH_KERNEL.preset" "/recovery/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
+    fi
+
+    # == Chroot ==
+
+    info 'Chrooting into recovery...'
+
+    cp "$0" /recovery/arch_install.sh 
+
+    arch-chroot /recovery/arch_install.sh chrooting_recovery
+
+}
+
+
+function setup_recovery_inside_chroot() {
+
+    # == Timezone, locale and language ==
+    
+    ln -sf /usr/share/zoneinfo/Europe/Lisbon /etc/localtime
+    hwclock --systohc
+    
+    if [ "$ARCH_LANG" == 'en' ]; then
+        ARCH_LOCALE='en_US'
+        elif [ "$ARCH_LANG" == 'pt' ]; then
+        ARCH_LOCALE='pt_PT'
+    else
+        fail "Unknown lang '$ARCH_LANG'"
+    fi
+    
+    sed -i "s/^#\(pt_PT.UTF-8\)/\1/" /etc/locale.gen
+    sed -i "s/^#\($ARCH_LOCALE.UTF-8\)/\1/" /etc/locale.gen
+    
+    locale-gen
+    
+    echo "LANG=$ARCH_LOCALE.UTF-8" > /etc/locale.conf
+    echo "KEYMAP=$ARCH_KEYBOARD" > /etc/vconsole.conf
+    echo "$ARCH_HOSTNAME" > /etc/hostname
+    echo "Welcome to $ARCH_HOSTNAME!" > /etc/motd
+    
+    cat > /etc/hosts <<EOF
+    127.0.0.1       localhost $ARCH_HOSTNAME
+    ::1             localhost $ARCH_HOSTNAME
+EOF
+
+    # == Root pw ==
+
+    temp_pw=""
+    usr="root"
+    read_password "User '$usr'" "temp_pw"
+    printf "${temp_pw}\n${temp_pw}\n" | passwd root
+    
+
+    
+}
+
+
+
+
+
+# ==========================================================================
 
 function chroot_cleanup() {
     printline '='
@@ -1061,6 +1169,10 @@ then
     echo "inside chroot"
     pause "Check state"
     inside_chroot
+elif [ "${1-default}" == "chrooting_recovery" ]
+    echo "inside chroot of recovery"
+    pause "Check state"
+    setup_recovery_inside_chroot
 else
     echo "Outside chroot"
     pause "Check state"
