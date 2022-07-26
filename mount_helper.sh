@@ -1,8 +1,15 @@
 #!/bin/bash
 
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 disk label" >&2
+  exit 1
+fi
+
+ARCH_DISK="$1"
+
 ARCH_CHROOT=".chroot"
-ARCH_DISK_ROOT_PART="/dev/sda2"
-ARCH_DISK_EFI_PART="/dev/sda1"
+ARCH_DISK_ROOT_PART="$ARCH_DISK""2"
+ARCH_DISK_EFI_PART="$ARCH_DISK""1"
 
 mkdir "$ARCH_CHROOT"
 

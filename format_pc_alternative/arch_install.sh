@@ -982,7 +982,6 @@ install_yay() {
 # ==========================================================================
 # == Recovery System ==
 
-#TODO:: Need to copy entire auxiliary scripts since I'm using them
 
 function setup_recovery_before_chroot() {
     
@@ -998,7 +997,8 @@ function setup_recovery_before_chroot() {
     base base-devel \
     zsh sudo \
     mkinitcpio btrfs-progs \
-    "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware crda vim
+    "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware \
+    crda vim "$ARCH_CPU_BRAND-ucode"
 
     pause "Pacstrap to recovery finished"
 
@@ -1007,6 +1007,14 @@ function setup_recovery_before_chroot() {
     info 'Setting up rest of the recovery'
 
     info 'Setting up fstab'
+
+    {
+        echo "# Static information about the filesystems."
+        echo "# See fstab(5) for details."
+        echo ""
+        echo "# <file system> <dir> <type> <options> <dump> <pass>"
+        echo ""
+    } > "/recovery/etc/fstab"
     
     genfstab -U "/recovery" >> "/recovery/etc/fstab"
     sed -i -r 's/,subvolid=[0-9]+//g' "/recovery/etc/fstab"
@@ -1029,13 +1037,23 @@ function setup_recovery_before_chroot() {
         cp "/etc/mkinitcpio.d/$ARCH_KERNEL.preset" "/recovery/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
     fi
 
+    # == Copying sudoers config file, needed if wish to create user and add to wheel ==
+
+    mkdir -p "/recovery/etc/sudoers.d/" 
+    cp "/etc/sudoers.d/secure" "/recovery/etc/sudoers.d"
+    chmod -c 440 "/recovery/etc/sudoers.d/secure"
+
     # == Chroot ==
 
     info 'Chrooting into recovery...'
 
-    cp "$0" /recovery/arch_install.sh 
+    mkdir -p /recovery/setup_recovery
 
-    arch-chroot /recovery/arch_install.sh chrooting_recovery
+    cp "$0" /recovery/setup_recovery/arch_install.sh 
+
+    cp -r "$ROOT_DIR/aux_scripts" /recovery/setup_recovery/
+
+    arch-chroot /recovery/setup_recovery/arch_install.sh chrooting_recovery
 
 }
 
@@ -1077,8 +1095,34 @@ EOF
     read_password "User '$usr'" "temp_pw"
     printf "${temp_pw}\n${temp_pw}\n" | passwd root
     
+    # == Boot ==
+    pause "mkinitcpio phase"
 
+    # shellcheck disable=SC2153
+    ARCH_DISK_P=$ARCH_DISK
+    if [[ "$ARCH_DISK_P" == nvme* ]]; then
+        ARCH_DISK_P="${ARCH_DISK_P}p"
+    fi
+        
+    if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
+        # if systemd boot
+        if [ "$ARCH_GRUB" == 'no' ]; then
+            ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
+            echo "${ROOT_OPTS} rootflags=subvol=/@recovery rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
+
+            mkdir -p "/efi"
+            mount "${ARCH_DISK_P}1" "/efi"
+            
+            mkinitcpio -p "$ARCH_KERNEL"
+            umount -R "/efi"
+        fi
+    fi
     
+    info "mkinitcpio ran successfully"
+    pause "Check image generation"
+    # TODO :: check if need to leave chroot
+    # TODO :: when copying mkinitcpio, need to change the name of the target .efi to include recovery,
+    # otherwise will override the originals from main system
 }
 
 
