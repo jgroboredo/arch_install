@@ -998,7 +998,7 @@ function setup_recovery_before_chroot() {
     zsh sudo \
     mkinitcpio btrfs-progs \
     "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware \
-    crda vim "$ARCH_CPU_BRAND-ucode"
+    crda vim "$ARCH_CPU_BRAND-ucode" arch-install-scripts
 
     pause "Pacstrap to recovery finished"
 
@@ -1050,6 +1050,8 @@ function setup_recovery_before_chroot() {
     mkdir -p /recovery/setup_recovery
 
     cp "$0" /recovery/setup_recovery/arch_install.sh 
+
+    chmod +x /recovery/setup_recovery/arch_install.sh
 
     cp -r "$ROOT_DIR/aux_scripts" /recovery/setup_recovery/
 
@@ -1109,6 +1111,8 @@ EOF
         if [ "$ARCH_GRUB" == 'no' ]; then
             ROOT_OPTS="root=UUID=$(blkid -o value -s UUID /dev/${ARCH_DISK_P}2)"
             echo "${ROOT_OPTS} rootflags=subvol=/@recovery rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
+            # fix name of *.efi generated
+            sed -i 's#efi_efi_image=.*#efi_efi_image=\"/efi/EFI/Linux/linux-recovery.efi\"#' "/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
 
             mkdir -p "/efi"
             mount "${ARCH_DISK_P}1" "/efi"
@@ -1119,10 +1123,10 @@ EOF
     fi
     
     info "mkinitcpio ran successfully"
-    pause "Check image generation"
-    # TODO :: check if need to leave chroot
-    # TODO :: when copying mkinitcpio, need to change the name of the target .efi to include recovery,
-    # otherwise will override the originals from main system
+    pause "Check image generation before leaving recovery chroot!"
+
+    # TODO :: activate recovery setup in main function
+
 }
 
 
