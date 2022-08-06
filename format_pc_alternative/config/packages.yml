@@ -201,7 +201,7 @@ core:
   - network-manager-applet
   - wpa_supplicant
   #- dnscrypt-proxy #replaced with systemd-resolved
-  - firewalld
+  #- firewalld # using iptables for now
   - fail2ban
   - wget curl aria2
   - wireguard-tools

@@ -35,6 +35,7 @@ ARCH_USERS=goncalo
 ARCH_PRESET='no'
 ARCH_INSTALL_DOTFILES='no'
 ARCH_INSTALL_AUR='no'
+ARCH_SETUP_RECOVERY='yes'
 ARCH_UNATTENDED='no'
 ARCH_PACKAGES="$CORE_DESKTOP_PKGS $EXTRA_DESKTOP_PKGS"
 
@@ -107,13 +108,14 @@ if [ "$ARCH_PRESET" != 'yes' ]; then
     else
         ARCH_ADMIN="$ARCH_USERS"
     fi
-    read -r -e -p "Language: "     -i "$ARCH_LANG"          ARCH_LANG
-    read -r -e -p "Swap (GB): "    -i "$ARCH_SWAP"          ARCH_SWAP
-    read -r -e -p "Kernel: "       -i "$ARCH_KERNEL"        ARCH_KERNEL
-    read -r -e -p "Grub for efi: " -i "$ARCH_GRUB"          ARCH_GRUB
-    read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"      ARCH_KEYBOARD
+    read -r -e -p "Language: "     -i "$ARCH_LANG"                  ARCH_LANG
+    read -r -e -p "Swap (GB): "    -i "$ARCH_SWAP"                  ARCH_SWAP
+    read -r -e -p "Kernel: "       -i "$ARCH_KERNEL"                ARCH_KERNEL
+    read -r -e -p "Grub for efi: " -i "$ARCH_GRUB"                  ARCH_GRUB
+    read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"              ARCH_KEYBOARD
     read -r -e -p "Dot Files: "    -i "$ARCH_INSTALL_DOTFILES"      ARCH_INSTALL_DOTFILES
-    read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"      ARCH_INSTALL_AUR
+    read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"           ARCH_INSTALL_AUR 
+    read -r -e -p "Recovery  : "   -i "$ARCH_SETUP_RECOVERY"        ARCH_SETUP_RECOVERY
 fi
 
 printline "="
@@ -164,6 +166,7 @@ function print_config() {
     printf "${CYAN}Unattended:${NOCOLOR} $ARCH_UNATTENDED\n"
     printf "${CYAN}Dot Files:${NOCOLOR}  $ARCH_INSTALL_DOTFILES\n"
     printf "${CYAN}AUR:${NOCOLOR}        $ARCH_INSTALL_AUR\n"
+    printf "${CYAN}Recovery:${NOCOLOR}   $ARCH_SETUP_RECOVERY\n"
     printline "="
     
     pause 'Check configuration'
@@ -1125,8 +1128,6 @@ EOF
     info "mkinitcpio ran successfully"
     pause "Check image generation before leaving recovery chroot!"
 
-    # TODO :: activate recovery setup in main function
-
 }
 
 
@@ -1207,6 +1208,9 @@ function inside_chroot() {
     fi
     if [ "$ARCH_INSTALL_AUR" == 'yes' ]; then
         install_yay
+    fi
+    if [ "$ARCH_SETUP_RECOVERY" == 'yes' ]; then
+        setup_recovery_before_chroot
     fi
     enable_services
     chroot_cleanup
