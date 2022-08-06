@@ -1118,7 +1118,7 @@ EOF
             sed -i 's#efi_efi_image=.*#efi_efi_image=\"/efi/EFI/Linux/linux-recovery.efi\"#' "/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
 
             mkdir -p "/efi"
-            mount "${ARCH_DISK_P}1" "/efi"
+            mount "/dev/${ARCH_DISK_P}1" "/efi"
             
             mkinitcpio -p "$ARCH_KERNEL"
             umount -R "/efi"
