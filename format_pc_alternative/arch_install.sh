@@ -56,7 +56,12 @@ fi
 
 # -- vm
 
-ARCH_VM="$(systemd-detect-virt || return 0)"
+if [[ "$(systemd-detect-virt)" == "none" ]]
+then
+    ARCH_VM="0"
+else
+    ARCH_VM=$(systemd-detect-virt)
+fi
 
 # -- cpu brand
 
@@ -1058,7 +1063,7 @@ function setup_recovery_before_chroot() {
 
     cp -r "$ROOT_DIR/aux_scripts" /recovery/setup_recovery/
 
-    arch-chroot /recovery/setup_recovery/arch_install.sh chrooting_recovery
+    arch-chroot /recovery /setup_recovery/arch_install.sh chrooting_recovery
 
 }
 
@@ -1102,6 +1107,10 @@ EOF
     
     # == Boot ==
     pause "mkinitcpio phase"
+
+    KERNEL_OPTS='usb-storage.quirks=174c:5136:u,152d:0578:u,152d:0583:u audit=0 ipv6.disable=1'
+    
+    KERNEL_OPTS="$KERNEL_OPTS snd_hda_intel.power_save=0"
 
     # shellcheck disable=SC2153
     ARCH_DISK_P=$ARCH_DISK
@@ -1222,6 +1231,7 @@ then
     pause "Check state"
     inside_chroot
 elif [ "${1-default}" == "chrooting_recovery" ]
+then
     echo "inside chroot of recovery"
     pause "Check state"
     setup_recovery_inside_chroot
