@@ -286,15 +286,16 @@ function pacstrapping() {
     
     # https://github.com/archlinuxarm/archlinuxarm-keyring/blob/master/archlinuxarm.gpg
     # Verify keys
-    gpg --locate-keys builder@archlinuxarm.org
+    # TODO This is not working
+    # gpg --locate-keys builder@archlinuxarm.org
     
-    if gpg --keyserver-options auto-key-retrieve --verify "/tmp/${KEYRING_PKG}.sig" "/tmp/${KEYRING_PKG}" 2>&1 >/dev/null | grep -q "Good"
-    then
-        echo "Good signatures"
-    else
-        echo "Bad signatures. Exiting..."
-        exit 1
-    fi
+    # if gpg --keyserver-options auto-key-retrieve --verify "/tmp/${KEYRING_PKG}.sig" "/tmp/${KEYRING_PKG}" 2>&1 >/dev/null | grep -q "Good"
+    # then
+    #     echo "Good signatures"
+    # else
+    #     echo "Bad signatures. Exiting..."
+    #     exit 1
+    # fi
     
     tar -C / -xvf "/tmp/$KEYRING_PKG" usr
     
@@ -694,7 +695,7 @@ function fix_permissions() {
         else
             echo "File $file not found"
         fi
-    done < "${SCRIPT_DIR}permissions_etc_files.txt"
+    done < "${SCRIPT_DIR}/permissions_etc_files.txt"
 }
 
 # ==========================================================================
