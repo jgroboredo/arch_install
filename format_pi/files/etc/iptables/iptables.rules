@@ -1,6 +1,55 @@
 *filter
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
 :OUTPUT ACCEPT [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+-A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -p icmp --icmp-type echo-request -j ACCEPT
+# for tautulli
+-A INPUT -i br+ -p TCP --dport 32400 -j ACCEPT
+# yacht
+-A INPUT -p tcp --dport 8000 -s 10.0.10.0/24 -j ACCEPT
+# plex - lan and wg
+# phone
+-A INPUT -p tcp --dport 32400 -s 10.0.10.2 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 192.168.200.65 -j ACCEPT
+#desktop
+-A INPUT -p tcp --dport 32400 -s 10.0.10.6 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 192.168.200.64 -j ACCEPT
+#lap
+-A INPUT -p tcp --dport 32400 -s 10.0.10.3 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 192.168.200.67 -j ACCEPT
+#tv
+-A INPUT -p tcp --dport 32400 -s 192.168.200.70 -j ACCEPT
+#alex
+-A INPUT -p tcp --dport 32400 -s 10.0.10.4 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 192.168.200.72 -j ACCEPT
+#ze
+-A INPUT -p tcp --dport 32400 -s 10.0.10.8 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 10.0.20.0/24 -j ACCEPT
+#nvidia-shield
+-A INPUT -p tcp --dport 32400 -s 192.168.200.69 -j ACCEPT
+-A INPUT -p tcp --dport 32400 -s 192.168.200.75 -j ACCEPT
+# ssh from phone, laptop, alex, desktop, rebelo - wg
+-A INPUT -p tcp --dport 22 -s 10.0.10.2 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.10.3 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.10.4 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.10.6 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.10.7 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.1.49 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.1.10 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.0.0.1 -j ACCEPT
+# ssh from desktop, laptop - lan
+-A INPUT -p tcp --dport 22 -s 192.168.200.64 -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 192.168.200.67 -j ACCEPT
+#VPN
+-A INPUT -p udp --dport 57278 -j ACCEPT
+# rclone dlna
+-A INPUT -p tcp --dport 7879 -j ACCEPT
+-A INPUT -p udp --dport 7879 -j ACCEPT
+# UPnP
+-A INPUT -p udp --dport 1900 -j ACCEPT
 COMMIT
 

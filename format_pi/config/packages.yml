@@ -1,9 +1,7 @@
 boot:
   pi:
     - raspberrypi-bootloader
-    - raspberrypi-bootloader-x  # extra codecs
     - raspberrypi-firmware
-    - firmware-raspberrypi  # needed for aarch64
 
 cpu:
   amd:
@@ -20,6 +18,7 @@ pi:
   - rng-tools  # for entropy
   - dhcpcd
   - btrfs-progs
+  - borg
   - zsh
   - zsh-theme-powerlevel10k zsh-syntax-highlighting
   - fzf
@@ -31,13 +30,16 @@ pi:
   - tcpdump
   - fail2ban
   - git
+  - net-tools
   - git-lfs
   - git-crypt
   - diff-so-fancy
   - neovim
   - jq
+  - qrencode
   - yq
   - ranger
+  - hdparm
   - nnn
   - ncdu
   - openssh
