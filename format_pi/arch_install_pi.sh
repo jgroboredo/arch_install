@@ -312,7 +312,7 @@ function pacstrapping() {
     pacstrap -G -M -C "$PACSTRAP_CONF" "$ARCH_CHROOT" \
     base base-devel \
     zsh sudo \
-    mkinitcpio btrfs-progs \
+    mkinitcpio btrfs-progs archlinuxarm-keyring\
     "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware crda \
     iptables-nft
     
