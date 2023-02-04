@@ -119,7 +119,7 @@ if [ "$ARCH_PRESET" != 'yes' ]; then
     read -r -e -p "Grub for efi: " -i "$ARCH_GRUB"                  ARCH_GRUB
     read -r -e -p "Keyboard: "     -i "$ARCH_KEYBOARD"              ARCH_KEYBOARD
     read -r -e -p "Dot Files: "    -i "$ARCH_INSTALL_DOTFILES"      ARCH_INSTALL_DOTFILES
-    read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"           ARCH_INSTALL_AUR 
+    read -r -e -p "Aur helper: "   -i "$ARCH_INSTALL_AUR"           ARCH_INSTALL_AUR
     read -r -e -p "Recovery  : "   -i "$ARCH_SETUP_RECOVERY"        ARCH_SETUP_RECOVERY
 fi
 
@@ -246,7 +246,7 @@ function disk_partitions() {
     fi
     
     export ARCH_DISK_EFI_PART=""
-
+    
     # BOOT_PART is never used (only in RPI formatting)
     export ARCH_DISK_BOOT_PART=""
     
@@ -777,6 +777,39 @@ EOF
 
 # ==========================================================================
 
+# == Fix Permissions ==
+
+function fix_permissions() {
+    
+    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    
+    # Dirs
+    while IFS="" read -r p || [ -n "$p" ]
+    do
+        permission="$(echo $p | awk '{print $1}')"
+        dir="$(echo $p | awk '{print $2}')"
+        if [[ -d "${dir}" ]]; then
+            chmod "${permission}" "${dir}"
+        else
+            echo "Dir $dir not found"
+        fi
+    done < "${SCRIPT_DIR}/permissions_etc_dirs.txt"
+    
+    # Files
+    while IFS="" read -r p || [ -n "$p" ]
+    do
+        permission="$(echo $p | awk '{print $1}')"
+        file="$(echo $p | awk '{print $2}')"
+        if [[ -f "${file}" ]]; then
+            chmod "${permission}" "${file}"
+        else
+            echo "File $file not found"
+        fi
+    done < "${SCRIPT_DIR}/permissions_etc_files.txt"
+}
+
+# ==========================================================================
+
 # == Services ==
 
 function enable_services() {
@@ -996,7 +1029,7 @@ function setup_recovery_before_chroot() {
     printline '='
     pause 'All done in the main system. Preparing recovery system now...'
     printline '='
-
+    
     # == Pacstrap ==
     
     pause "Before pacstrap to recovery"
@@ -1007,15 +1040,15 @@ function setup_recovery_before_chroot() {
     mkinitcpio btrfs-progs \
     "$ARCH_KERNEL" "$ARCH_KERNEL-headers" linux-firmware \
     crda vim "$ARCH_CPU_BRAND-ucode" arch-install-scripts
-
+    
     pause "Pacstrap to recovery finished"
-
+    
     printline '='
-
+    
     info 'Setting up rest of the recovery'
-
+    
     info 'Setting up fstab'
-
+    
     {
         echo "# Static information about the filesystems."
         echo "# See fstab(5) for details."
@@ -1036,40 +1069,40 @@ function setup_recovery_before_chroot() {
     cat "/recovery/etc/fstab"
     
     pause "Check the fstab"
-
+    
     printline '='
-
+    
     # == Copying mkinitcpio preset if systemd boot ==
-
+    
     if [ "$(command -v mkinitcpio)" ] && [ "$ARCH_BOOT_MODE" != 'pi' ] && [ "$ARCH_GRUB" != 'yes' ]; then
         cp "/etc/mkinitcpio.d/$ARCH_KERNEL.preset" "/recovery/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
     fi
-
+    
     # == Copying sudoers config file, needed if wish to create user and add to wheel ==
-
-    mkdir -p "/recovery/etc/sudoers.d/" 
+    
+    mkdir -p "/recovery/etc/sudoers.d/"
     cp "/etc/sudoers.d/secure" "/recovery/etc/sudoers.d"
     chmod -c 440 "/recovery/etc/sudoers.d/secure"
-
+    
     # == Chroot ==
-
+    
     info 'Chrooting into recovery...'
-
+    
     mkdir -p /recovery/setup_recovery
-
-    cp "$0" /recovery/setup_recovery/arch_install.sh 
-
+    
+    cp "$0" /recovery/setup_recovery/arch_install.sh
+    
     chmod +x /recovery/setup_recovery/arch_install.sh
-
+    
     cp -r "$ROOT_DIR/aux_scripts" /recovery/setup_recovery/
-
+    
     arch-chroot /recovery /setup_recovery/arch_install.sh chrooting_recovery
-
+    
 }
 
 
 function setup_recovery_inside_chroot() {
-
+    
     # == Timezone, locale and language ==
     
     ln -sf /usr/share/zoneinfo/Europe/Lisbon /etc/localtime
@@ -1097,9 +1130,9 @@ function setup_recovery_inside_chroot() {
     127.0.0.1       localhost $ARCH_HOSTNAME
     ::1             localhost $ARCH_HOSTNAME
 EOF
-
+    
     # == Root pw ==
-
+    
     temp_pw=""
     usr="root"
     read_password "User '$usr'" "temp_pw"
@@ -1107,17 +1140,17 @@ EOF
     
     # == Boot ==
     pause "mkinitcpio phase"
-
+    
     KERNEL_OPTS='usb-storage.quirks=174c:5136:u,152d:0578:u,152d:0583:u audit=0 ipv6.disable=1'
     
     KERNEL_OPTS="$KERNEL_OPTS snd_hda_intel.power_save=0"
-
+    
     # shellcheck disable=SC2153
     ARCH_DISK_P=$ARCH_DISK
     if [[ "$ARCH_DISK_P" == nvme* ]]; then
         ARCH_DISK_P="${ARCH_DISK_P}p"
     fi
-        
+    
     if [ "$ARCH_BOOT_MODE" == 'efi' ]; then
         # if systemd boot
         if [ "$ARCH_GRUB" == 'no' ]; then
@@ -1125,7 +1158,7 @@ EOF
             echo "${ROOT_OPTS} rootflags=subvol=/@recovery rw ${KERNEL_OPTS}" > /etc/kernel/cmdline
             # fix name of *.efi generated
             sed -i 's#efi_efi_image=.*#efi_efi_image=\"/efi/EFI/Linux/linux-recovery.efi\"#' "/etc/mkinitcpio.d/$ARCH_KERNEL.preset"
-
+            
             mkdir -p "/efi"
             mount "/dev/${ARCH_DISK_P}1" "/efi"
             
@@ -1136,7 +1169,7 @@ EOF
     
     info "mkinitcpio ran successfully"
     pause "Check image generation before leaving recovery chroot!"
-
+    
 }
 
 
@@ -1212,6 +1245,7 @@ function inside_chroot() {
     bootloader
     network
     login
+    fix_permissions
     if [ "$ARCH_INSTALL_DOTFILES" == 'yes' ]; then
         install_dotfiles
     fi
