@@ -119,7 +119,7 @@
 644 /etc/default/cpupower
 644 /etc/default/grub
 644 /etc/pkcs11/pkcs11.conf.example
-755 /etc/systemd/resolved.conf
+644 /etc/systemd/resolved.conf
 644 /etc/systemd/system/fail2ban.service.d/override.conf
 644 /etc/systemd/system/getty@tty1.service.d/override.conf
 644 /etc/systemd/system/update-issue.service
@@ -679,7 +679,7 @@
 644 /etc/udisks2/mount_options.conf.example
 644 /etc/udisks2/udisks2.conf
 644 /etc/trusted-key.key
-755 /etc/ssh/sshd_config
+644 /etc/ssh/sshd_config
 644 /etc/ssh/ssh_host_rsa_key.pub
 600 /etc/ssh/ssh_host_rsa_key
 644 /etc/ssh/ssh_host_dsa_key.pub
