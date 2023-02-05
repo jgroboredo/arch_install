@@ -9,15 +9,15 @@
 644 /etc/pacman.d/gnupg/crls.d/DIR.txt
 644 /etc/pacman.d/gnupg/pubring.gpg~
 644 /etc/pacman.d/gnupg/pubring.gpg
-755 /etc/pacman.d/hooks/001-mksnap.hook
+644 /etc/pacman.d/hooks/001-mksnap.hook
 755 /etc/pacman.d/hooks/100-efi-systemd-boot.hook
-755 /etc/pacman.d/hooks/998-mirrorupgrade.hook
-755 /etc/pacman.d/hooks/999-pacnew-check.hook
+644 /etc/pacman.d/hooks/998-mirrorupgrade.hook
+644 /etc/pacman.d/hooks/999-pacnew-check.hook
 644 /etc/pacman.d/hooks/002-mkinitcpio-preset-pre.hook
 644 /etc/pacman.d/hooks/002-mkinitcpio-preset-post.hook
 644 /etc/pacman.d/mirrorlist
 644 /etc/hosts
-755 /etc/issue
+644 /etc/issue
 644 /etc/ld.so.conf.d/lib32-glibc.conf
 644 /etc/ld.so.conf.d/opencollada.conf
 644 /etc/ld.so.conf.d/fakeroot.conf
@@ -120,7 +120,7 @@
 644 /etc/default/grub
 644 /etc/pkcs11/pkcs11.conf.example
 755 /etc/systemd/resolved.conf
-755 /etc/systemd/system/fail2ban.service.d/override.conf
+644 /etc/systemd/system/fail2ban.service.d/override.conf
 644 /etc/systemd/system/getty@tty1.service.d/override.conf
 644 /etc/systemd/system/update-issue.service
 644 /etc/systemd/system/update-issue.timer
@@ -309,8 +309,8 @@
 644 /etc/X11/xorg.conf.d/00-keyboard.conf
 644 /etc/X11/xorg.conf.d/30-touchpad.conf
 644 /etc/kernel/cmdline
-755 /etc/udev/rules.d/50-nut-ups.rules
-755 /etc/udev/rules.d/60-io-schedulers.rules
+644 /etc/udev/rules.d/50-nut-ups.rules
+644 /etc/udev/rules.d/60-io-schedulers.rules
 644 /etc/udev/udev.conf
 644 /etc/xdg/reflector/reflector.conf
 755 /etc/xdg/Xwayland-session.d/10-ibus-x11
@@ -358,7 +358,7 @@
 644 /etc/iproute2/rt_scopes
 644 /etc/iproute2/rt_tables
 440 /etc/sudoers.d/secure
-755 /etc/zsh/zshenv
+644 /etc/zsh/zshenv
 755 /etc/zsh/zshrc
 644 /etc/zsh/zprofile
 644 /etc/mkinitcpio.d/linux.preset
@@ -649,9 +649,9 @@
 644 /etc/dconf/db/ibus
 644 /etc/dconf/db/.placeholder
 644 /etc/dconf/profile/ibus
-755 /etc/polkit-1/rules.d/49-cups-pk.rules
-755 /etc/polkit-1/rules.d/49-firewalld.rules
-755 /etc/fuse.conf
+644 /etc/polkit-1/rules.d/49-cups-pk.rules
+644 /etc/polkit-1/rules.d/49-firewalld.rules
+644 /etc/fuse.conf
 755 /etc/avahi/avahi-autoipd.action
 644 /etc/avahi/avahi-daemon.conf
 755 /etc/avahi/avahi-dnsconfd.action
@@ -701,7 +701,7 @@
 600 /etc/NetworkManager/system-connections/Redmi Note 7_2484.nmconnection
 600 /etc/NetworkManager/system-connections/eduroam.nmconnection
 600 /etc/NetworkManager/system-connections/Redmi Note 7_8963.nmconnection
-755 /etc/NetworkManager/NetworkManager.conf
+644 /etc/NetworkManager/NetworkManager.conf
 644 /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 644 /etc/dnscrypt-proxy/allowed-ips.txt
 644 /etc/dnscrypt-proxy/allowed-names.txt
@@ -712,12 +712,12 @@
 644 /etc/dnscrypt-proxy/dnscrypt-proxy.toml.pacnew
 644 /etc/dnscrypt-proxy/forwarding-rules.txt
 644 /etc/firewall/applet.conf
-755 /etc/firewalld/services/jose-any.xml
-755 /etc/firewalld/services/jose-ssh.xml
-755 /etc/firewalld/services/roc-receiver.xml
-755 /etc/firewalld/zones/public.xml
+644 /etc/firewalld/services/jose-any.xml
+644 /etc/firewalld/services/jose-ssh.xml
+644 /etc/firewalld/services/roc-receiver.xml
+644 /etc/firewalld/zones/public.xml
 644 /etc/firewalld/zones/docker.xml
-755 /etc/firewalld/zones/home.xml
+644 /etc/firewalld/zones/home.xml
 644 /etc/firewalld/firewalld.conf
 644 /etc/firewalld/lockdown-whitelist.xml
 644 /etc/logrotate.d/iptraf-ng-logrotate.conf
@@ -887,8 +887,8 @@
 644 /etc/fail2ban/filter.d/xinetd-fail.conf
 644 /etc/fail2ban/filter.d/znc-adminlog.conf
 644 /etc/fail2ban/filter.d/zoneminder.conf
-755 /etc/fail2ban/fail2ban.local
-755 /etc/fail2ban/jail.local
+644 /etc/fail2ban/fail2ban.local
+644 /etc/fail2ban/jail.local
 644 /etc/fail2ban/fail2ban.conf
 644 /etc/fail2ban/jail.conf
 644 /etc/fail2ban/paths-arch.conf
@@ -918,7 +918,7 @@
 644 /etc/java-openjdk/logging.properties
 644 /etc/java-openjdk/net.properties
 644 /etc/java-openjdk/sound.properties
-755 /etc/papersize
+644 /etc/papersize
 644 /etc/rc_maps.cfg
 644 /etc/ImageMagick-7/colors.xml
 644 /etc/ImageMagick-7/delegates.xml
@@ -939,7 +939,7 @@
 644 /etc/xinetd.d/telnet
 644 /etc/xinetd.d/rsync
 644 /etc/xinetd.d/svn
-755 /etc/firejail/globals.local
+644 /etc/firejail/globals.local
 644 /etc/firejail/0ad.profile
 644 /etc/firejail/1password.profile
 644 /etc/firejail/2048-qt.profile
@@ -2436,11 +2436,11 @@
 644 /etc/texmf/web2c/updmap-hdr.cfg
 644 /etc/texmf/xdvi/XDvi
 644 /etc/texmf/ls-R
-755 /etc/sddm.conf.d/numlock.conf
-755 /etc/sddm.conf.d/theme.conf
-755 /etc/sddm.conf.d/x11.conf
-755 /etc/pacstrap_arm.conf
-755 /etc/resolv.conf.head
+644 /etc/sddm.conf.d/numlock.conf
+644 /etc/sddm.conf.d/theme.conf
+644 /etc/sddm.conf.d/x11.conf
+644 /etc/pacstrap_arm.conf
+644 /etc/resolv.conf.head
 644 /etc/passwd.OLD
 644 /etc/printcap
 600 /etc/docker/key.json

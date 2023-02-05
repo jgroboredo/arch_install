@@ -359,7 +359,7 @@
 644 /etc/iproute2/rt_tables
 440 /etc/sudoers.d/secure
 644 /etc/zsh/zshenv
-644 /etc/zsh/zshrc
+755 /etc/zsh/zshrc
 644 /etc/zsh/zprofile
 644 /etc/mkinitcpio.d/linux.preset
 644 /etc/conf.d/smartd
@@ -448,7 +448,7 @@
 600 /etc/NetworkManager/system-connections/Redmi Note 7_2484.nmconnection
 600 /etc/NetworkManager/system-connections/eduroam.nmconnection
 600 /etc/NetworkManager/system-connections/Redmi Note 7_8963.nmconnection
-755 /etc/NetworkManager/NetworkManager.conf
+644 /etc/NetworkManager/NetworkManager.conf
 644 /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 644 /etc/dnscrypt-proxy/allowed-ips.txt
 644 /etc/dnscrypt-proxy/allowed-names.txt
