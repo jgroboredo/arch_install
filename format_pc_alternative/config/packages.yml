@@ -375,3 +375,47 @@ extra:
   - evince nuspell hspell libvoikko 
 
 #- optimus-manager aur
+
+nas:
+  - rng-tools  # for entropy
+  - dhcpcd
+  - btrfs-progs
+  - smartmontools
+  - hdparm
+  - zsh
+  - zsh-theme-powerlevel10k zsh-syntax-highlighting
+  - fzf
+  - exa
+  - rsync
+  - docker
+  - docker-compose
+  - wireguard-tools
+  - tailscale
+  - tcpdump
+  #- fail2ban
+  - git
+  - git-lfs
+  - git-crypt
+  - diff-so-fancy
+  - neovim
+  - jq
+  - yq
+  - ranger
+  - nnn
+  - gdu  # ncdu
+  - openssh
+  - htop
+  - iotop
+  - bmon
+  - iptraf-ng
+  - iperf3
+  - tmux
+  - fuse2
+  - udisks2
+  - ffmpeg
+  - wget
+  - usbutils
+  - python
+  - wol
+  - reflector
+  - borg borgmatic python-llfuse
