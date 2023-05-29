@@ -10,4 +10,4 @@ bios_image="/boot/initramfs-%PKGBASE%.img"
 efi_image="/boot/initramfs-%PKGBASE%.img"
 #efi_options="--splash /usr/share/systemd/bootctl/splash-arch.bmp"
 efi_microcode=(/boot/*-ucode.img)
-efi_efi_image="/efi/EFI/Linux/%PKGBASE%.efi"
+efi_uki="/efi/EFI/Linux/%PKGBASE%.efi"
